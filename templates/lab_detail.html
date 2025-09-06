@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ lab }} - MediSlotBook</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>{{ lab }}</h1>
+  <ul>
+    {% for test in tests %}
+    <li>{{ test }}</li>
+    {% endfor %}
+  </ul>
+  <a href="{{ url_for('pathology') }}">← Back to Pathology Labs</a>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pathology Labs - MediSlotBook</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    function filterLabs() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const items = document.querySelectorAll(".lab-item");
+      items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(input) ? "" : "none";
+      });
+    }
+    function sortLabs() {
+      const ul = document.getElementById("labList");
+      Array.from(ul.children)
+        .sort((a, b) => a.textContent.localeCompare(b.textContent))
+        .forEach(li => ul.appendChild(li));
+    }
+  </script>
+</head>
+<body>
+  <h1>Pathology Labs</h1>
+  <div class="search-filter">
+    <input type="text" id="searchInput" placeholder="Search lab..." onkeyup="filterLabs()">
+    <button onclick="sortLabs()">Filter A–Z</button>
+  </div>
+  <ul id="labList">
+    {% for lab in labs %}
+    <li class="lab-item"><a href="{{ url_for('lab_detail', name=lab) }}">{{ lab }}</a></li>
+    {% endfor %}
+  </ul>
+  <a href="{{ url_for('home') }}">← Back</a>
+</body>
+</html>
