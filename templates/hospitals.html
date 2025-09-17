@@ -1,15 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Hospitals</title>
+  <meta charset="UTF-8">
+  <title>Hospitals - MediSlotBook</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h2>Available Hospitals</h2>
-  <ul>
+  <h1>Hospitals</h1>
+  <div class="search-filter">
+    <input type="text" placeholder="Search hospitals..." onkeyup="searchList(this.value)">
+    <select onchange="filterList(this.value)">
+      <option value="">Filter</option>
+      <option value="asc">A-Z</option>
+      <option value="desc">Z-A</option>
+    </select>
+  </div>
+  <ul id="hospital-list">
     {% for hospital in hospitals %}
-      <li><a href="{{ url_for('hospital_detail', name=hospital) }}">{{ hospital }}</a></li>
+      <li><a href="/hospital/{{ hospital }}">{{ hospital }}</a></li>
     {% endfor %}
   </ul>
+  <a href="/choice">⬅ Back</a>
+
+  <script>
+    function searchList(query) {
+      let items = document.querySelectorAll("#hospital-list li");
+      items.forEach(item => {
+        item.style.display = item.innerText.toLowerCase().includes(query.toLowerCase()) ? "" : "none";
+      });
+    }
+    function filterList(order) {
+      let list = document.getElementById("hospital-list");
+      let items = Array.from(list.querySelectorAll("li"));
+      items.sort((a, b) => order === "asc" ? a.innerText.localeCompare(b.innerText) : b.innerText.localeCompare(a.innerText));
+      list.innerHTML = "";
+      items.forEach(item => list.appendChild(item));
+    }
+  </script>
 </body>
 </html>
