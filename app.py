@@ -28,16 +28,16 @@ def choice():
 
 # ---------------- HOSPITALS ----------------
 hospitals = [
-    "IPGMER & SSKM Hospital",
-    "Chittaranjan National Cancer Institute",
-    "Saroj Gupta Cancer Centre & Research Institute",
-    "Belle Vue Clinic",
-    "AMRI Hospitals",
-    "Apollo Gleneagles Hospital",
-    "Medica Superspecialty Hospital",
-    "Fortis Hospital, Anandapur",
-    "Rabindranath Tagore International Institute of Cardiac Sciences",
-    "Ruby General Hospital"
+    {"id": 1, "name": "IPGMER & SSKM Hospital"},
+    {"id": 2, "name": "Chittaranjan National Cancer Institute"},
+    {"id": 3, "name": "Saroj Gupta Cancer Centre & Research Institute"},
+    {"id": 4, "name": "Belle Vue Clinic"},
+    {"id": 5, "name": "AMRI Hospitals"},
+    {"id": 6, "name": "Apollo Gleneagles Hospital"},
+    {"id": 7, "name": "Medica Superspecialty Hospital"},
+    {"id": 8, "name": "Fortis Hospital, Anandapur"},
+    {"id": 9, "name": "Rabindranath Tagore International Institute of Cardiac Sciences"},
+    {"id": 10, "name": "Ruby General Hospital"}
 ]
 
 wards = [
@@ -51,39 +51,45 @@ wards = [
 def hospitals_page():
     return render_template("hospitals.html", hospitals=hospitals)
 
-@app.route("/hospital/<name>")
-def hospital_detail(name):
-    return render_template("wards.html", hospital=name, wards=wards)
+@app.route("/hospital/<int:hospital_id>")
+def hospital_detail(hospital_id):
+    hospital = next((h for h in hospitals if h["id"] == hospital_id), None)
+    if hospital is None:
+        return "Hospital not found", 404
+    return render_template("wards.html", hospital=hospital["name"], wards=wards, hospital_id=hospital_id)
 
-@app.route("/hospital/<hospital>/ward/<ward>", methods=["GET", "POST"])
-def book_bed(hospital, ward):
+@app.route("/hospital/<int:hospital_id>/ward/<ward>", methods=["GET", "POST"])
+def book_bed(hospital_id, ward):
+    hospital = next((h for h in hospitals if h["id"] == hospital_id), None)
+    if hospital is None:
+        return "Hospital not found", 404
     if request.method == "POST":
         beds = request.form["beds"]
         start_date = request.form["start_date"]
         end_date = request.form["end_date"]
         return render_template(
             "confirm_booking.html",
-            hospital=hospital,
+            hospital=hospital["name"],
             ward=ward,
             beds=beds,
             start_date=start_date,
             end_date=end_date
         )
-    return render_template("book_bed.html", hospital=hospital, ward=ward)
+    return render_template("book_bed.html", hospital=hospital["name"], ward=ward)
 
 # ---------------- PATHOLOGY LABS ----------------
 labs = [
-    "Dr Lal PathLabs",
-    "Metropolis Healthcare",
-    "SRL Diagnostics",
-    "Apollo Diagnostics",
-    "Thyrocare",
-    "Vijaya Diagnostic Centre",
-    "Pathkind Labs",
-    "Oncquest Laboratories",
-    "Medall Diagnostics",
-    "Quest Diagnostics India",
-    "Healthians"
+    {"id": 1, "name": "Dr Lal PathLabs"},
+    {"id": 2, "name": "Metropolis Healthcare"},
+    {"id": 3, "name": "SRL Diagnostics"},
+    {"id": 4, "name": "Apollo Diagnostics"},
+    {"id": 5, "name": "Thyrocare"},
+    {"id": 6, "name": "Vijaya Diagnostic Centre"},
+    {"id": 7, "name": "Pathkind Labs"},
+    {"id": 8, "name": "Oncquest Laboratories"},
+    {"id": 9, "name": "Medall Diagnostics"},
+    {"id": 10, "name": "Quest Diagnostics India"},
+    {"id": 11, "name": "Healthians"}
 ]
 
 tests = [
@@ -108,23 +114,29 @@ time_slots = [
 def labs_page():
     return render_template("labs.html", labs=labs)
 
-@app.route("/lab/<name>")
-def lab_detail(name):
-    return render_template("tests.html", lab=name, tests=tests)
+@app.route("/lab/<int:lab_id>")
+def lab_detail(lab_id):
+    lab = next((l for l in labs if l["id"] == lab_id), None)
+    if lab is None:
+        return "Lab not found", 404
+    return render_template("tests.html", lab=lab["name"], tests=tests, lab_id=lab_id)
 
-@app.route("/lab/<lab>/test/<test>", methods=["GET", "POST"])
-def book_test(lab, test):
+@app.route("/lab/<int:lab_id>/test/<test>", methods=["GET", "POST"])
+def book_test(lab_id, test):
+    lab = next((l for l in labs if l["id"] == lab_id), None)
+    if lab is None:
+        return "Lab not found", 404
     if request.method == "POST":
         slots = request.form["slots"]
         time_slot = request.form["time_slot"]
         return render_template(
             "confirm_test_booking.html",
-            lab=lab,
+            lab=lab["name"],
             test=test,
             slots=slots,
             time_slot=time_slot
         )
-    return render_template("book_test.html", lab=lab, test=test, time_slots=time_slots)
+    return render_template("book_test.html", lab=lab["name"], test=test, time_slots=time_slots)
 
 # ---------------- PAYMENT ----------------
 @app.route("/payment")
