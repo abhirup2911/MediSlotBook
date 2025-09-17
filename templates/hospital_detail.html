@@ -1,17 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>{{ hospital }} - MediSlotBook</title>
+  <title>{{ name }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>{{ hospital }}</h1>
+  <h2>{{ name }} - Wards</h2>
   <ul>
-    {% for ward in wards %}
-    <li>{{ ward.name }} - <span class="beds">{{ ward.beds }} beds available</span></li>
+    {% for ward, beds in wards.items() %}
+      <li><a href="{{ url_for('ward_booking', hospital=name, ward=ward) }}">{{ ward }}</a> - <span>{{ beds }} beds available</span></li>
     {% endfor %}
   </ul>
-  <a href="{{ url_for('hospitals') }}">← Back to Hospitals</a>
 </body>
 </html>
