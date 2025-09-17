@@ -1,4 +1,4 @@
-/* Base: green medical theme */
+/* General styling */
 body {
   font-family: Arial, sans-serif;
   text-align: center;
@@ -12,8 +12,18 @@ h1, h2 {
   margin: 20px;
 }
 
-/* Buttons (shared) */
-button, .btn {
+a {
+  text-decoration: none;
+  color: #1b5e20;
+  font-weight: bold;
+}
+
+a:hover {
+  color: #004d00;
+}
+
+/* Buttons */
+button {
   padding: 10px 20px;
   margin-top: 20px;
   background: #2e7d32;
@@ -21,21 +31,14 @@ button, .btn {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.08s ease-in-out, box-shadow 0.2s ease;
-  box-shadow: 0 2px 8px rgba(46,125,50,0.2);
+  font-size: 16px;
 }
 
-button:hover, .btn:hover {
+button:hover {
   background: #1b5e20;
 }
 
-button:active, .btn:active {
-  transform: scale(0.98);
-}
-
-/* -----------------------------
-   Welcome screen + animations
-------------------------------*/
+/* Welcome animation */
 .welcome-screen {
   position: absolute;
   top: 40%;
@@ -49,27 +52,20 @@ button:active, .btn:active {
 
 @keyframes fadeUp {
   from { opacity: 1; transform: translate(-50%, -50%); }
-  to   { opacity: 0; transform: translate(-50%, -150%); }
+  to { opacity: 0; transform: translate(-50%, -150%); }
 }
 
+/* Choice screen */
 .choice-screen {
   display: none;
   margin-top: 100px;
-  opacity: 0;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* Options */
 .options {
   display: flex;
   justify-content: center;
   gap: 30px;
   margin-top: 30px;
-  flex-wrap: wrap;
 }
 
 .box {
@@ -80,104 +76,91 @@ button:active, .btn:active {
   color: #1b5e20;
   font-size: 20px;
   font-weight: bold;
-  transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  transition: 0.3s;
 }
 
 .box:hover {
   background: #81c784;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
 }
 
-/* Search + filter */
+/* Search and filter bar */
 .search-filter {
   display: flex;
   justify-content: center;
-  align-items: center;
   gap: 10px;
-  margin: 20px 0;
-  flex-wrap: wrap;
+  margin: 20px;
 }
 
-.search-filter input {
-  padding: 10px 12px;
-  width: 260px;
-  border: 1px solid #2e7d32;
+.search-filter input,
+.search-filter select {
+  padding: 8px;
   border-radius: 6px;
-  outline: none;
-  background: #f3fbf4;
+  border: 1px solid #2e7d32;
 }
 
-.search-filter input::placeholder {
-  color: #4caf50;
-}
-
-/* Lists */
+/* Lists (Hospitals, Labs, etc.) */
 ul {
-  list-style: none;
+  list-style-type: none;
   padding: 0;
-  margin: 0 auto;
-  max-width: 960px;
 }
 
-.hospital-item,
-.lab-item {
+li {
   margin: 10px 0;
 }
 
-.hospital-item a,
-.lab-item a {
-  display: inline-block;
-  text-decoration: none;
-  color: #2e7d32;
-  font-weight: bold;
-  padding: 12px 16px;
-  border-radius: 10px;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.08s ease;
-}
-
-.hospital-item a:hover,
-.lab-item a:hover {
+li a {
   background: #c8e6c9;
-  color: #1b5e20;
-  transform: translateY(-1px);
-}
-
-/* Beds/tests availability */
-.beds, .slots {
-  color: #d32f2f;
-  font-weight: bold;
-}
-
-/* Back links */
-a[href="/"], a[href="/hospitals"], a[href="/pathology"] {
+  padding: 10px 20px;
+  border-radius: 8px;
   display: inline-block;
-  margin: 24px 0;
-  text-decoration: none;
+  transition: 0.3s;
+}
+
+li a:hover {
+  background: #a5d6a7;
+}
+
+/* Booking forms */
+form {
+  margin: 20px auto;
+  max-width: 400px;
+  background: #f1f8e9;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+input, select {
+  width: 90%;
+  padding: 8px;
+  margin: 5px 0 15px;
+  border: 1px solid #2e7d32;
+  border-radius: 6px;
+}
+
+/* Confirmation pages */
+p strong {
   color: #2e7d32;
 }
 
-a[href="/"]:hover,
-a[href="/hospitals"]:hover,
-a[href="/pathology"]:hover {
-  text-decoration: underline;
+p span {
+  color: red;
+  font-weight: bold;
 }
 
-/* Responsive */
-@media (max-width: 600px) {
-  .options {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .box {
-    width: 80%;
-    margin: 0 auto;
-  }
-
-  .search-filter input {
-    width: 85vw;
-    max-width: 360px;
-  }
+/* Payment page styling */
+.payment-box {
+  background: #f1f8e9;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  margin: 40px auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
