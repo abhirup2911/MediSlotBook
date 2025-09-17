@@ -1,52 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pathology Labs - MediSlotBook</title>
+  <title>Labs</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>Pathology Labs</h1>
-
-  <div class="search-filter">
-    <input type="text" id="searchLab" placeholder="Search lab...">
-    <select id="filterLab">
-      <option value="asc">A → Z</option>
-      <option value="desc">Z → A</option>
-    </select>
-  </div>
-
-  <ul id="labList">
+  <h2>Available Pathology Labs</h2>
+  <ul>
     {% for lab in labs %}
       <li><a href="{{ url_for('lab_detail', name=lab) }}">{{ lab }}</a></li>
     {% endfor %}
   </ul>
-
-  <a href="{{ url_for('index') }}">⬅ Back</a>
-
-  <script>
-    const searchInput = document.getElementById("searchLab");
-    const filterSelect = document.getElementById("filterLab");
-    const list = document.getElementById("labList");
-    const items = Array.from(list.getElementsByTagName("li"));
-
-    searchInput.addEventListener("input", () => {
-      const value = searchInput.value.toLowerCase();
-      items.forEach(item => {
-        item.style.display = item.textContent.toLowerCase().includes(value) ? "" : "none";
-      });
-    });
-
-    filterSelect.addEventListener("change", () => {
-      const sorted = items.sort((a, b) => {
-        if (filterSelect.value === "asc") {
-          return a.textContent.localeCompare(b.textContent);
-        } else {
-          return b.textContent.localeCompare(a.textContent);
-        }
-      });
-      list.innerHTML = "";
-      sorted.forEach(item => list.appendChild(item));
-    });
-  </script>
 </body>
 </html>
