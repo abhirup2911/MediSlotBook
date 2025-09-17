@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Labs</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h2>Available Pathology Labs</h2>
+  <ul>
+    {% for lab in labs %}
+      <li><a href="{{ url_for('lab_detail', name=lab) }}">{{ lab }}</a></li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
