@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Choose Option - MediSlotBook</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>Welcome, {{ user.name }}!</h1>
+  <div class="options">
+    <a href="{{ url_for('show_hospitals') }}" class="box">Hospitals</a>
+    <a href="{{ url_for('show_labs') }}" class="box">Pathology Labs</a>
+  </div>
+</body>
+</html>
