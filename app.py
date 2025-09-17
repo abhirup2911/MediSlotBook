@@ -9,13 +9,21 @@ app.secret_key = "supersecretkey"
 hospitals = {
     "Apollo Hospital": {"Maternity Ward": 10, "ICU": 5, "General Ward": 15},
     "Fortis Hospital": {"Pediatric Ward": 8, "ICU": 6, "General Ward": 12},
-    "AIIMS": {"Emergency Ward": 7, "ICU": 10, "Maternity Ward": 9}
+    "AIIMS": {"Emergency Ward": 7, "ICU": 10, "Maternity Ward": 9},
+    "Rabindranath Tagore International Institute of Cardiac Sciences": {"Emergency Ward": 7, "ICU": 10, "Maternity Ward": 9},
+    "Belle Vue Clinic": {"Maternity Ward": 10, "ICU": 5, "General Ward": 15},
+    "Chittaranjan National Cancer Institute": {"Pediatric Ward": 8, "ICU": 6, "General Ward": 12},
+    "Ruby General Hospital": {"Emergency Ward": 7, "ICU": 10, "Maternity Ward": 9} 
 }
 
 labs = {
     "Dr Lal Path Labs": {"Blood Test": 20, "Blood-Sugar Test": 15, "X-Ray": 10},
     "Thyrocare": {"Thyroid Test": 12, "MRI": 6, "Vitamin Test": 8},
-    "SRL Diagnostics": {"Liver Function Test": 14, "Kidney Function Test": 10, "CT Scan": 5}
+    "SRL Diagnostics": {"Liver Function Test": 14, "Kidney Function Test": 10, "CT Scan": 5},
+    "Apollo Diagnostics": {"Blood Test": 20, "Blood-Sugar Test": 15, "X-Ray": 10},
+    "Redcliffe Labs": {"Liver Function Test": 14, "Kidney Function Test": 10, "CT Scan": 5}, 
+    "Healthians": {"Blood Test": 20, "Blood-Sugar Test": 15, "X-Ray": 10},
+    "Metropolis Healthcare": {"Liver Function Test": 14, "Kidney Function Test": 10, "CT Scan": 5}
 }
 
 time_slots = ["6:00AM - 7:00AM", "7:00AM - 8:00AM", "10:00AM - 11:00AM",
