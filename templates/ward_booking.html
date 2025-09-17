@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Book Ward - {{ ward }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h2>{{ hospital }} - {{ ward }}</h2>
+  <p>Available Beds: {{ available_beds }}</p>
+  <form method="POST">
+    <label>Number of Beds:</label>
+    <input type="number" name="beds" min="1" max="{{ available_beds }}" required>
+    <label>From Date:</label>
+    <input type="date" name="from_date" required>
+    <label>To Date:</label>
+    <input type="date" name="to_date" required>
+    <button type="submit">Proceed</button>
+  </form>
+</body>
+</html>
