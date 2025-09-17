@@ -1,17 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>{{ lab }} - MediSlotBook</title>
+  <title>{{ name }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>{{ lab }}</h1>
+  <h2>{{ name }} - Tests</h2>
   <ul>
-    {% for test in tests %}
-    <li>{{ test }}</li>
+    {% for test, slots in tests.items() %}
+      <li><a href="{{ url_for('test_booking', lab=name, test=test) }}">{{ test }}</a> - <span>{{ slots }} slots available</span></li>
     {% endfor %}
   </ul>
-  <a href="{{ url_for('pathology') }}">← Back to Pathology Labs</a>
 </body>
 </html>
