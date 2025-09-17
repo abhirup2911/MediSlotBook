@@ -1,41 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>Hospitals - MediSlotBook</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <h1>Hospitals</h1>
+
   <div class="search-filter">
-    <input type="text" placeholder="Search hospitals..." onkeyup="searchList(this.value)">
-    <select onchange="filterList(this.value)">
-      <option value="">Filter</option>
-      <option value="asc">A-Z</option>
-      <option value="desc">Z-A</option>
+    <input type="text" id="searchHospital" placeholder="Search hospital...">
+    <select id="filterHospital">
+      <option value="asc">A → Z</option>
+      <option value="desc">Z → A</option>
     </select>
   </div>
-  <ul id="hospital-list">
+
+  <ul id="hospitalList">
     {% for hospital in hospitals %}
-      <li><a href="/hospital/{{ hospital }}">{{ hospital }}</a></li>
+      <li><a href="{{ url_for('hospital_detail', name=hospital) }}">{{ hospital }}</a></li>
     {% endfor %}
   </ul>
-  <a href="/choice">⬅ Back</a>
+
+  <a href="{{ url_for('index') }}">⬅ Back</a>
 
   <script>
-    function searchList(query) {
-      let items = document.querySelectorAll("#hospital-list li");
+    const searchInput = document.getElementById("searchHospital");
+    const filterSelect = document.getElementById("filterHospital");
+    const list = document.getElementById("hospitalList");
+    const items = Array.from(list.getElementsByTagName("li"));
+
+    searchInput.addEventListener("input", () => {
+      const value = searchInput.value.toLowerCase();
       items.forEach(item => {
-        item.style.display = item.innerText.toLowerCase().includes(query.toLowerCase()) ? "" : "none";
+        item.style.display = item.textContent.toLowerCase().includes(value) ? "" : "none";
       });
-    }
-    function filterList(order) {
-      let list = document.getElementById("hospital-list");
-      let items = Array.from(list.querySelectorAll("li"));
-      items.sort((a, b) => order === "asc" ? a.innerText.localeCompare(b.innerText) : b.innerText.localeCompare(a.innerText));
+    });
+
+    filterSelect.addEventListener("change", () => {
+      const sorted = items.sort((a, b) => {
+        if (filterSelect.value === "asc") {
+          return a.textContent.localeCompare(b.textContent);
+        } else {
+          return b.textContent.localeCompare(a.textContent);
+        }
+      });
       list.innerHTML = "";
-      items.forEach(item => list.appendChild(item));
-    }
+      sorted.forEach(item => list.appendChild(item));
+    });
   </script>
 </body>
 </html>
