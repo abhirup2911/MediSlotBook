@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Confirm Booking</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h2>Confirm Your Booking</h2>
+  <p>Hospital: <strong>{{ hospital }}</strong></p>
+  <p>Ward: <strong>{{ ward }}</strong></p>
+  <p>Beds Booked: <strong>{{ beds }}</strong></p>
+  <p>From: <strong>{{ from_date }}</strong></p>
+  <p>To: <strong>{{ to_date }}</strong></p>
+  <form action="{{ url_for('payment') }}" method="POST">
+    <button type="submit">CONFIRM BOOKING</button>
+  </form>
+</body>
+</html>
