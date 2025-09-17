@@ -1,34 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>MediSlotBook</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script>
-    function enterApp() {
-      const welcome = document.querySelector('.welcome-screen');
-      welcome.classList.add('fade-up');
-      setTimeout(() => {
-        welcome.style.display = 'none';
-        const choice = document.querySelector('.choice-screen');
-        choice.style.display = 'block';
-        choice.style.animation = 'fadeIn 1s forwards';
-      }, 1000);
-    }
-  </script>
 </head>
 <body>
   <div class="welcome-screen">
-    <h1>Welcome To MediSlotBook</h1>
-    <button onclick="enterApp()">Enter</button>
-  </div>
-
-  <div class="choice-screen">
-    <h2>Please choose one:</h2>
-    <div class="options">
-      <a href="{{ url_for('hospitals') }}" class="box">Hospitals</a>
-      <a href="{{ url_for('pathology') }}" class="box">Pathology Lab</a>
-    </div>
+    <h1>Welcome to MediSlotBook</h1>
+    <form action="{{ url_for('login') }}">
+      <button type="submit">Enter</button>
+    </form>
   </div>
 </body>
 </html>
