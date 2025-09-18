@@ -67,12 +67,9 @@ DEFAULT_SLOTS_PER_TEST = 10
 
 # ---------------------------
 # In-memory booking stores (prototype)
-# - beds_calendar[hospital][ward][date_str] = booked_count
-# - test_slots[lab][test][time_slot] = booked_count
-# - bookings list keeps records for auditing (optional)
 # ---------------------------
-beds_calendar = {}     # nested dict
-test_slots = {}        # nested dict
+beds_calendar = {}     # beds_calendar[hospital][ward][date_str] = booked_count
+test_slots = {}        # test_slots[lab][test][time_slot] = booked_count
 bookings = []          # list of confirmed bookings for record
 
 # initialize calendars
@@ -138,33 +135,66 @@ def choice():
 # ---------------------------
 # Hospitals: list, wards, book-bed
 # ---------------------------
+
+# Primary function (keeps your original name)
 @app.route("/hospitals")
 def hospitals_page():
-    return render_template("hospitals.html", hospitals=hospitals)
+    # Your templates use 'hospital.html' (singular) filename, so render that
+    return render_template("hospital.html", hospitals=hospitals)
 
+# Alias endpoint expected by templates: show_hospitals
+@app.route("/hospitals/show")
+def show_hospitals_alias():
+    # keep backwards compatibility with templates calling 'show_hospitals' endpoint name
+    return hospitals_page()
+
+# Provide endpoint name 'show_hospitals' if templates call url_for('show_hospitals')
+# Flask endpoint name defaults to function name; create an alias function with that name.
+def show_hospitals():
+    return hospitals_page()
+# register the alias endpoint name explicitly (so url_for('show_hospitals') works)
+app.add_url_rule('/hospitals', endpoint='show_hospitals', view_func=hospitals_page)
+
+# Hospital detail expects wards dict in template (hospital_detail.html uses wards.items())
 @app.route("/hospital/<name>")
 def hospital_detail(name):
-    # templates expect hospital name variable
-    return render_template("wards.html", hospital=name, wards=wards)
+    # build wards dict mapping -> default bed counts
+    wards_dict = {w: DEFAULT_BEDS_PER_WARD for w in wards}
+    # template file you have is 'hospital_detail.html'
+    return render_template("hospital_detail.html", name=name, wards=wards_dict)
 
+# The template calls url_for('ward_booking', hospital=name, ward=ward)
+# Your booking function is book_bed(...). Create a wrapper endpoint named 'ward_booking'
 @app.route("/hospital/<hospital>/ward/<ward>", methods=["GET", "POST"])
 def book_bed(hospital, ward):
     # show booking form on GET
     if request.method == "POST":
         # collect requested booking info
-        beds = int(request.form.get("beds"))
-        start_date_str = request.form.get("start_date")
-        end_date_str = request.form.get("end_date")
+        # Note: some templates use 'from_date'/'to_date' while earlier code used start_date/end_date.
+        # We will accept both names when present.
+        beds = None
+        # try different form field names
+        if request.form.get("beds"):
+            beds = int(request.form.get("beds"))
+        elif request.form.get("beds_requested"):
+            beds = int(request.form.get("beds_requested"))
+        else:
+            beds = int(request.form.get("beds") or request.form.get("beds_requested") or 0)
+
+        # date fields: try both names
+        start_date_str = request.form.get("start_date") or request.form.get("from_date")
+        end_date_str = request.form.get("end_date") or request.form.get("to_date")
+
         # validate date format
         try:
             start_date = parse_date(start_date_str)
             end_date = parse_date(end_date_str)
             if end_date < start_date:
-                return render_template("book_bed.html", hospital=hospital, ward=ward,
-                                       error="End date must be same or after start date.")
+                return render_template("ward_booking.html", hospital=hospital, ward=ward,
+                                       error="End date must be same or after start date.", available_beds=DEFAULT_BEDS_PER_WARD)
         except Exception:
-            return render_template("book_bed.html", hospital=hospital, ward=ward,
-                                   error="Invalid date format. Use YYYY-MM-DD.")
+            return render_template("ward_booking.html", hospital=hospital, ward=ward,
+                                   error="Invalid date format. Use YYYY-MM-DD.", available_beds=DEFAULT_BEDS_PER_WARD)
         # store pending booking in session (will be confirmed on payment)
         session["pending_booking"] = {
             "type": "bed",
@@ -175,19 +205,33 @@ def book_bed(hospital, ward):
             "end_date": end_date_str
         }
         return redirect(url_for("confirm_booking"))
-    return render_template("book_bed.html", hospital=hospital, ward=ward)
+    # GET: show form; templates expect available_beds variable
+    return render_template("ward_booking.html", hospital=hospital, ward=ward, available_beds=DEFAULT_BEDS_PER_WARD)
+
+# Create an endpoint named 'ward_booking' (some templates call url_for('ward_booking', ...))
+# Since book_bed has the route URL we keep it, but register endpoint alias
+app.add_url_rule('/hospital/<hospital>/ward/<ward>', endpoint='ward_booking', view_func=book_bed, methods=['GET','POST'])
 
 # ---------------------------
 # Labs: list, tests, book-test
 # ---------------------------
 @app.route("/labs")
 def labs_page():
+    # render template 'labs.html' (your file)
     return render_template("labs.html", labs=labs)
+
+# alias expected by templates: show_labs
+def show_labs():
+    return labs_page()
+app.add_url_rule('/labs', endpoint='show_labs', view_func=labs_page)
 
 @app.route("/lab/<name>")
 def lab_detail(name):
-    return render_template("tests.html", lab=name, tests=tests)
+    # templates (lab_detail.html) expect tests to be a dict mapping test -> slots
+    tests_dict = {t: DEFAULT_SLOTS_PER_TEST for t in tests}
+    return render_template("lab_detail.html", name=name, tests=tests_dict)
 
+# booking for tests; templates expect endpoint 'test_booking' but function here is book_test
 @app.route("/lab/<lab>/test/<test>", methods=["GET", "POST"])
 def book_test(lab, test):
     if request.method == "POST":
@@ -195,8 +239,8 @@ def book_test(lab, test):
         time_slot = request.form.get("time_slot")
         # basic validation
         if time_slot not in time_slots:
-            return render_template("book_test.html", lab=lab, test=test, time_slots=time_slots,
-                                   error="Invalid time slot selected.")
+            return render_template("test_booking.html", lab=lab, test=test, time_slots=time_slots,
+                                   error="Invalid time slot selected.", available_slots=DEFAULT_SLOTS_PER_TEST)
         # pending booking saved in session
         session["pending_booking"] = {
             "type": "test",
@@ -206,7 +250,11 @@ def book_test(lab, test):
             "time_slot": time_slot
         }
         return redirect(url_for("confirm_booking"))
-    return render_template("book_test.html", lab=lab, test=test, time_slots=time_slots)
+    # GET: show form
+    return render_template("test_booking.html", lab=lab, test=test, time_slots=time_slots, available_slots=DEFAULT_SLOTS_PER_TEST)
+
+# register alias endpoint 'test_booking' so templates that call that name will resolve
+app.add_url_rule('/lab/<lab>/test/<test>', endpoint='test_booking', view_func=book_test, methods=['GET','POST'])
 
 # ---------------------------
 # Confirm Page (shows pending booking)
@@ -218,14 +266,15 @@ def confirm_booking():
         return redirect(url_for("choice"))  # nothing to confirm
     # Render the right template depending on booking type
     if pending["type"] == "bed":
-        return render_template("confirm_booking.html",
+        # your provided template filename is confirm_bed_booking.html
+        return render_template("confirm_bed_booking.html",
                                hospital=pending["hospital"],
                                ward=pending["ward"],
                                beds=pending["beds"],
-                               start_date=pending["start_date"],
-                               end_date=pending["end_date"])
+                               from_date=pending["start_date"],
+                               to_date=pending["end_date"])
     else:
-        # test booking
+        # test booking -> your provided template is confirm_test_booking.html
         return render_template("confirm_test_booking.html",
                                lab=pending["lab"],
                                test=pending["test"],
@@ -244,7 +293,6 @@ def payment():
     # require logged-in (not Guest)
     if not user or user.get("name") == "Guest":
         # Ask to login first. Keep pending booking in session.
-        # Redirect to login page so they can create account and then continue.
         return redirect(url_for("login"))
     # Process bed booking
     if pending["type"] == "bed":
@@ -261,11 +309,11 @@ def payment():
                 # Not enough beds on this date
                 msg = (f"Not enough beds available on {date_str}. "
                        f"{DEFAULT_BEDS_PER_WARD - booked} beds left that day.")
-                return render_template("confirm_booking.html",
+                return render_template("confirm_bed_booking.html",
                                        hospital=hospital, ward=ward,
                                        beds=beds_requested,
-                                       start_date=pending["start_date"],
-                                       end_date=pending["end_date"],
+                                       from_date=pending["start_date"],
+                                       to_date=pending["end_date"],
                                        error=msg)
         # All dates ok — reserve them
         for single_date in daterange(start_date, end_date):
