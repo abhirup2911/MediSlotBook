@@ -63,7 +63,7 @@ time_slots = [
 # Capacity (prototype)
 # ---------------------------
 DEFAULT_BEDS_PER_WARD = 10
-DEFAULT_SLOTS_PER_TEST = 10
+DEFAULT_SLOTS_PER_TEST = 3   # FIXED: pathology max = 3 slots per test/time slot
 
 # ---------------------------
 # In-memory booking stores (prototype)
@@ -137,35 +137,25 @@ def choice():
 # Hospitals: list, wards, book-bed
 # ---------------------------
 
-# main hospitals endpoint (keeps name matching many templates)
 @app.route("/hospitals")
 def hospitals_page():
-    # your template file name is hospital.html (you changed it). Render it.
     return render_template("hospital.html", hospitals=hospitals)
 
-# alias 'show_hospitals' used in some templates -> point to same view
 app.add_url_rule('/hospitals', endpoint='show_hospitals', view_func=hospitals_page)
 
-# hospital detail (wards). Template name you have: hospital_detail.html
 @app.route("/hospital/<name>")
 def hospital_detail(name):
-    # prepare a dict mapping ward->available beds (current availability)
-    # compute "available now" as DEFAULT - max booked on any date (conservative)
     wards_dict = {}
     for w in wards:
-        # compute maximum booked across dates for that ward (if any)
         booked_values = beds_calendar.get(name, {}).get(w, {})
         max_booked = max(booked_values.values()) if booked_values else 0
         available = max(0, DEFAULT_BEDS_PER_WARD - max_booked)
         wards_dict[w] = available
     return render_template("hospital_detail.html", name=name, wards=wards_dict)
 
-# booking form: templates expect endpoint name 'ward_booking', so register that name
 @app.route("/hospital/<hospital>/ward/<ward>", methods=["GET", "POST"])
 def ward_booking_view(hospital, ward):
-    # GET -> show booking form (ward_booking.html expects available_beds)
     if request.method == "POST":
-        # Accept beds and dates. Templates used "from_date"/"to_date" or "start_date"/"end_date" in messages; be flexible.
         beds = int(request.form.get("beds", 0))
         start_date_str = request.form.get("start_date") or request.form.get("from_date")
         end_date_str = request.form.get("end_date") or request.form.get("to_date")
@@ -180,7 +170,6 @@ def ward_booking_view(hospital, ward):
             return render_template("ward_booking.html", hospital=hospital, ward=ward,
                                    error="Invalid date format. Use YYYY-MM-DD.",
                                    available_beds=DEFAULT_BEDS_PER_WARD)
-        # Save pending booking in session (will be finalized on payment)
         session["pending_booking"] = {
             "type": "bed",
             "hospital": hospital,
@@ -190,13 +179,11 @@ def ward_booking_view(hospital, ward):
             "end_date": end_date_str
         }
         return redirect(url_for("confirm_booking"))
-    # GET: compute available beds today (conservative: minimum available across upcoming dates not shown — use default minus current max)
     booked_values = beds_calendar.get(hospital, {}).get(ward, {})
     max_booked = max(booked_values.values()) if booked_values else 0
     available_beds = max(0, DEFAULT_BEDS_PER_WARD - max_booked)
     return render_template("ward_booking.html", hospital=hospital, ward=ward, available_beds=available_beds)
 
-# also register alias endpoint 'ward_booking' so templates calling that name work
 app.add_url_rule('/hospital/<hospital>/ward/<ward>', endpoint='ward_booking', view_func=ward_booking_view, methods=['GET','POST'])
 
 # ---------------------------
@@ -204,19 +191,21 @@ app.add_url_rule('/hospital/<hospital>/ward/<ward>', endpoint='ward_booking', vi
 # ---------------------------
 @app.route("/labs")
 def labs_page():
-    # your file is labs.html
     return render_template("labs.html", labs=labs)
 
-# alias expected by templates
 app.add_url_rule('/labs', endpoint='show_labs', view_func=labs_page)
 
 @app.route("/lab/<name>")
 def lab_detail(name):
-    # return tests dict mapping test -> remaining slots per time slot (we'll show default)
-    tests_dict = {t: DEFAULT_SLOTS_PER_TEST for t in tests}
+    # compute available slots per test (minimum available across times)
+    tests_dict = {}
+    for t in tests:
+        booked_map = test_slots.get(name, {}).get(t, {})
+        max_booked = max(booked_map.values()) if booked_map else 0
+        available = max(0, DEFAULT_SLOTS_PER_TEST - max_booked)
+        tests_dict[t] = available
     return render_template("lab_detail.html", name=name, tests=tests_dict)
 
-# booking form for tests: templates expect endpoint 'test_booking'
 @app.route("/lab/<lab>/test/<test>", methods=["GET", "POST"])
 def test_booking_view(lab, test):
     if request.method == "POST":
@@ -225,7 +214,6 @@ def test_booking_view(lab, test):
         if time_slot not in time_slots:
             return render_template("test_booking.html", lab=lab, test=test, time_slots=time_slots,
                                    error="Invalid time slot selected.", available_slots=DEFAULT_SLOTS_PER_TEST)
-        # store pending booking
         session["pending_booking"] = {
             "type": "test",
             "lab": lab,
@@ -234,12 +222,10 @@ def test_booking_view(lab, test):
             "time_slot": time_slot
         }
         return redirect(url_for("confirm_booking"))
-    # GET: compute available slots for this lab/test/time_slot conservatively (show default)
-    # templates expect available_slots variable (single number), so we show default minus max booked across slots (conservative)
-    # But better UX would show per time slot; for now provide DEFAULT
-    return render_template("test_booking.html", lab=lab, test=test, time_slots=time_slots, available_slots=DEFAULT_SLOTS_PER_TEST)
+    # GET: show availability for this lab/test/time slot
+    available_slots = {ts: max(0, DEFAULT_SLOTS_PER_TEST - test_slots[lab][test][ts]) for ts in time_slots}
+    return render_template("test_booking.html", lab=lab, test=test, time_slots=time_slots, available_slots=available_slots)
 
-# alias endpoint 'test_booking' so url_for('test_booking', ...) used in templates resolves
 app.add_url_rule('/lab/<lab>/test/<test>', endpoint='test_booking', view_func=test_booking_view, methods=['GET','POST'])
 
 # ---------------------------
@@ -273,17 +259,14 @@ def payment():
     user = session.get("user")
     if not pending:
         return render_template("payment.html", error="No pending booking to pay for.")
-    # If user not logged in or Guest, show the login-first message
     if not user or user.get("name") == "Guest":
         return render_template("payment.html", error="Please Login first and then try again.")
-    # finalize bed booking
     if pending["type"] == "bed":
         hospital = pending["hospital"]
         ward = pending["ward"]
         beds_requested = int(pending["beds"])
         start_date = parse_date(pending["start_date"])
         end_date = parse_date(pending["end_date"])
-        # check availability on every date
         for single_date in daterange(start_date, end_date):
             date_str = single_date.isoformat()
             booked = beds_calendar.setdefault(hospital, {}).setdefault(ward, {}).get(date_str, 0)
@@ -296,12 +279,10 @@ def payment():
                                        from_date=pending["start_date"],
                                        to_date=pending["end_date"],
                                        error=msg)
-        # reserve on all dates
         for single_date in daterange(start_date, end_date):
             date_str = single_date.isoformat()
             current = beds_calendar[hospital][ward].get(date_str, 0)
             beds_calendar[hospital][ward][date_str] = current + beds_requested
-        # record booking and clear pending
         booking_record = {
             "type": "bed",
             "user": user,
@@ -314,7 +295,6 @@ def payment():
         bookings.append(booking_record)
         session.pop("pending_booking", None)
         return render_template("payment.html", success="Your bed(s) have been booked. Thank you for using MediSlotBook.")
-    # finalize test booking
     elif pending["type"] == "test":
         lab = pending["lab"]
         test_name = pending["test"]
@@ -322,14 +302,12 @@ def payment():
         time_slot = pending["time_slot"]
         current = test_slots.setdefault(lab, {}).setdefault(test_name, {}).get(time_slot, 0)
         if current + slots_requested > DEFAULT_SLOTS_PER_TEST:
-            msg = (f"Not enough slots available for {time_slot}. "
-                   f"{DEFAULT_SLOTS_PER_TEST - current} slots left at that time.")
+            msg = (f"This slot time is already full. Please choose another time.")
             return render_template("confirm_test_booking.html",
                                    lab=lab, test=test_name,
                                    slots=slots_requested,
                                    time_slot=time_slot,
                                    error=msg)
-        # reserve
         test_slots[lab][test_name][time_slot] = current + slots_requested
         booking_record = {
             "type": "test",
@@ -346,7 +324,7 @@ def payment():
         return render_template("payment.html", error="Unknown booking type.")
 
 # ---------------------------
-# Debug helper (optional)
+# Debug helper
 # ---------------------------
 @app.route("/_debug_bookings")
 def debug_bookings():
