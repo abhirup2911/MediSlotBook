@@ -63,27 +63,26 @@ time_slots = [
 # Capacity (prototype)
 # ---------------------------
 DEFAULT_BEDS_PER_WARD = 10
-DEFAULT_SLOTS_PER_TEST = 10   # FIXED: pathology max = 3 slots per test/time slot
+DEFAULT_TOTAL_SLOTS_PER_TEST = 10    # Total quota per test across all slots
+DEFAULT_SLOTS_PER_TIME_SLOT = 3      # Max bookings per single time slot
 
 # ---------------------------
 # In-memory booking stores (prototype)
-# Beds stored per hospital->ward->date
-# Test slots stored per lab->test->time_slot
 # ---------------------------
-beds_calendar = {}     # beds_calendar[hospital][ward][date_str] = booked_count
-test_slots = {}        # test_slots[lab][test][time_slot] = booked_count
-bookings = []          # list of confirmed bookings (records)
+beds_calendar = {}
+test_slots = {}   # test_slots[lab][test]["total"], test_slots[lab][test][time_slot]
+bookings = []
 
 # initialize calendars
 for h in hospitals:
     beds_calendar[h] = {}
     for w in wards:
-        beds_calendar[h][w] = {}  # date_str -> booked_count
+        beds_calendar[h][w] = {}
 
 for l in labs:
     test_slots[l] = {}
     for t in tests:
-        test_slots[l][t] = {}
+        test_slots[l][t] = {"total": 0}
         for ts in time_slots:
             test_slots[l][t][ts] = 0
 
@@ -95,7 +94,6 @@ def daterange(start_date, end_date):
         yield start_date + timedelta(n)
 
 def parse_date(d):
-    # expects YYYY-MM-DD
     return datetime.strptime(d, "%Y-%m-%d").date()
 
 # ---------------------------
@@ -107,13 +105,11 @@ def home():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # If a pending booking exists in session, we'll let user continue after login
     if request.method == "POST":
         if "guest" in request.form:
             session["user"] = {"name": "Guest"}
             return redirect(url_for("choice"))
         else:
-            # Save minimal user info in session
             session["user"] = {
                 "name": request.form.get("fullname") or request.form.get("name") or "User",
                 "age": request.form.get("age"),
@@ -121,7 +117,6 @@ def login():
                 "email": request.form.get("email"),
                 "phone": request.form.get("phone")
             }
-            # if pending booking exists, go to confirm page so they can pay
             if session.get("pending_booking"):
                 return redirect(url_for("confirm_booking"))
             return redirect(url_for("choice"))
@@ -136,7 +131,6 @@ def choice():
 # ---------------------------
 # Hospitals: list, wards, book-bed
 # ---------------------------
-
 @app.route("/hospitals")
 def hospitals_page():
     return render_template("hospital.html", hospitals=hospitals)
@@ -197,12 +191,10 @@ app.add_url_rule('/labs', endpoint='show_labs', view_func=labs_page)
 
 @app.route("/lab/<name>")
 def lab_detail(name):
-    # compute available slots per test (minimum available across times)
     tests_dict = {}
     for t in tests:
-        booked_map = test_slots.get(name, {}).get(t, {})
-        max_booked = max(booked_map.values()) if booked_map else 0
-        available = max(0, DEFAULT_SLOTS_PER_TEST - max_booked)
+        total_booked = test_slots.get(name, {}).get(t, {}).get("total", 0)
+        available = max(0, DEFAULT_TOTAL_SLOTS_PER_TEST - total_booked)
         tests_dict[t] = available
     return render_template("lab_detail.html", name=name, tests=tests_dict)
 
@@ -211,9 +203,31 @@ def test_booking_view(lab, test):
     if request.method == "POST":
         slots = int(request.form.get("slots", 0))
         time_slot = request.form.get("time_slot")
+
         if time_slot not in time_slots:
-            return render_template("test_booking.html", lab=lab, test=test, time_slots=time_slots,
-                                   error="Invalid time slot selected.", available_slots=DEFAULT_SLOTS_PER_TEST)
+            return render_template("test_booking.html", lab=lab, test=test,
+                                   time_slots=time_slots,
+                                   available_slots={},
+                                   total_available=DEFAULT_TOTAL_SLOTS_PER_TEST,
+                                   error="Invalid time slot selected.")
+
+        total_booked = test_slots[lab][test]["total"]
+        slot_booked = test_slots[lab][test][time_slot]
+
+        if total_booked + slots > DEFAULT_TOTAL_SLOTS_PER_TEST:
+            return render_template("test_booking.html", lab=lab, test=test,
+                                   time_slots=time_slots,
+                                   available_slots={},
+                                   total_available=0,
+                                   error="No slots available for this test.")
+
+        if slot_booked + slots > DEFAULT_SLOTS_PER_TIME_SLOT:
+            return render_template("test_booking.html", lab=lab, test=test,
+                                   time_slots=time_slots,
+                                   available_slots={},
+                                   total_available=DEFAULT_TOTAL_SLOTS_PER_TEST - total_booked,
+                                   error="All slots for this time is already full. Please choose some other time.")
+
         session["pending_booking"] = {
             "type": "test",
             "lab": lab,
@@ -222,14 +236,18 @@ def test_booking_view(lab, test):
             "time_slot": time_slot
         }
         return redirect(url_for("confirm_booking"))
-    # GET: show availability for this lab/test/time slot
-    available_slots = {ts: max(0, DEFAULT_SLOTS_PER_TEST - test_slots[lab][test][ts]) for ts in time_slots}
-    return render_template("test_booking.html", lab=lab, test=test, time_slots=time_slots, available_slots=available_slots)
 
-app.add_url_rule('/lab/<lab>/test/<test>', endpoint='test_booking', view_func=test_booking_view, methods=['GET','POST'])
+    total_booked = test_slots[lab][test]["total"]
+    total_available = max(0, DEFAULT_TOTAL_SLOTS_PER_TEST - total_booked)
+    available_slots = {ts: max(0, min(DEFAULT_SLOTS_PER_TIME_SLOT - test_slots[lab][test][ts], total_available))
+                       for ts in time_slots}
+    return render_template("test_booking.html", lab=lab, test=test,
+                           time_slots=time_slots,
+                           available_slots=available_slots,
+                           total_available=total_available)
 
 # ---------------------------
-# Confirm Page (shows pending booking)
+# Confirm Page
 # ---------------------------
 @app.route("/confirm_booking")
 def confirm_booking():
@@ -251,7 +269,7 @@ def confirm_booking():
                                time_slot=pending["time_slot"])
 
 # ---------------------------
-# Payment processing (finalize booking)
+# Payment processing
 # ---------------------------
 @app.route("/payment", methods=["POST"])
 def payment():
@@ -261,6 +279,7 @@ def payment():
         return render_template("payment.html", error="No pending booking to pay for.")
     if not user or user.get("name") == "Guest":
         return render_template("payment.html", error="Please Login first and then try again.")
+
     if pending["type"] == "bed":
         hospital = pending["hospital"]
         ward = pending["ward"]
@@ -271,8 +290,7 @@ def payment():
             date_str = single_date.isoformat()
             booked = beds_calendar.setdefault(hospital, {}).setdefault(ward, {}).get(date_str, 0)
             if booked + beds_requested > DEFAULT_BEDS_PER_WARD:
-                msg = (f"Not enough beds available on {date_str}. "
-                       f"{DEFAULT_BEDS_PER_WARD - booked} beds left that day.")
+                msg = f"Not enough beds available on {date_str}. {DEFAULT_BEDS_PER_WARD - booked} beds left that day."
                 return render_template("confirm_bed_booking.html",
                                        hospital=hospital, ward=ward,
                                        beds=beds_requested,
@@ -283,43 +301,51 @@ def payment():
             date_str = single_date.isoformat()
             current = beds_calendar[hospital][ward].get(date_str, 0)
             beds_calendar[hospital][ward][date_str] = current + beds_requested
-        booking_record = {
-            "type": "bed",
-            "user": user,
-            "hospital": hospital,
-            "ward": ward,
+        bookings.append({
+            "type": "bed", "user": user,
+            "hospital": hospital, "ward": ward,
             "beds": beds_requested,
-            "from": pending["start_date"],
-            "to": pending["end_date"]
-        }
-        bookings.append(booking_record)
+            "from": pending["start_date"], "to": pending["end_date"]
+        })
         session.pop("pending_booking", None)
         return render_template("payment.html", success="Your bed(s) have been booked. Thank you for using MediSlotBook.")
+
     elif pending["type"] == "test":
         lab = pending["lab"]
         test_name = pending["test"]
         slots_requested = int(pending["slots"])
         time_slot = pending["time_slot"]
-        current = test_slots.setdefault(lab, {}).setdefault(test_name, {}).get(time_slot, 0)
-        if current + slots_requested > DEFAULT_SLOTS_PER_TEST:
-            msg = (f"This slot time is already full. Please choose another time.")
+
+        total_booked = test_slots[lab][test_name]["total"]
+        slot_booked = test_slots[lab][test_name][time_slot]
+
+        if total_booked + slots_requested > DEFAULT_TOTAL_SLOTS_PER_TEST:
+            msg = "No slots left for this test."
             return render_template("confirm_test_booking.html",
                                    lab=lab, test=test_name,
                                    slots=slots_requested,
                                    time_slot=time_slot,
                                    error=msg)
-        test_slots[lab][test_name][time_slot] = current + slots_requested
-        booking_record = {
-            "type": "test",
-            "user": user,
-            "lab": lab,
-            "test": test_name,
+
+        if slot_booked + slots_requested > DEFAULT_SLOTS_PER_TIME_SLOT:
+            msg = "All slots for this time is already full. Please choose another time."
+            return render_template("confirm_test_booking.html",
+                                   lab=lab, test=test_name,
+                                   slots=slots_requested,
+                                   time_slot=time_slot,
+                                   error=msg)
+
+        test_slots[lab][test_name]["total"] += slots_requested
+        test_slots[lab][test_name][time_slot] += slots_requested
+        bookings.append({
+            "type": "test", "user": user,
+            "lab": lab, "test": test_name,
             "slots": slots_requested,
             "time_slot": time_slot
-        }
-        bookings.append(booking_record)
+        })
         session.pop("pending_booking", None)
         return render_template("payment.html", success="Your slot(s) have been booked. Thank you for using MediSlotBook.")
+
     else:
         return render_template("payment.html", error="Unknown booking type.")
 
