@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Booking Confirmation</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="confirmation-box">
+    <h2>Booking Confirmation</h2>
+    <p>{{ message }}</p>
+    <a href="{{ url_for('home') }}">← Back to Home</a>
+  </div>
+</body>
+</html>
