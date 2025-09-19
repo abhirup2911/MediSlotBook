@@ -8,7 +8,10 @@
   <h2>{{ name }} - Tests</h2>
   <ul>
     {% for test, slots in tests.items() %}
-      <li><a href="{{ url_for('test_booking', lab=name, test=test) }}">{{ test }}</a> - <span>{{ slots }} slots available</span></li>
+      <li>
+        <a href="{{ url_for('test_booking', lab=name, test=test) }}">{{ test }}</a>
+        - <span>{{ slots }} total slots available</span>
+      </li>
     {% endfor %}
   </ul>
 </body>
