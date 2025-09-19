@@ -63,7 +63,7 @@ time_slots = [
 # Capacity (prototype)
 # ---------------------------
 DEFAULT_BEDS_PER_WARD = 10
-DEFAULT_SLOTS_PER_TEST = 3   # FIXED: pathology max = 3 slots per test/time slot
+DEFAULT_SLOTS_PER_TEST = 10   # FIXED: pathology max = 3 slots per test/time slot
 
 # ---------------------------
 # In-memory booking stores (prototype)
