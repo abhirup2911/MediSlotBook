@@ -7,8 +7,20 @@
 <body>
   <div class="payment-box">
     <h2>Payment Page (Prototype)</h2>
-    <p>This is a fake payment page for demo purposes only.</p>
-    <button onclick="alert('Payment Successful!')">Pay Now</button>
+
+    {% if error %}
+      <p style="color: red;">{{ error }}</p>
+      <a href="{{ url_for('login') }}"><button>Login</button></a>
+    {% elif success %}
+      <p style="color: green;">{{ success }}</p>
+      <a href="{{ url_for('choice') }}"><button>Back to Home</button></a>
+    {% else %}
+      <p>This is a fake payment page for demo purposes only.</p>
+      <form method="POST" action="{{ url_for('payment') }}">
+        <button type="submit">Pay Now</button>
+      </form>
+    {% endif %}
+
   </div>
 </body>
 </html>
