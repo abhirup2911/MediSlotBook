@@ -5,13 +5,14 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h2>Confirm Your Test Booking</h2>
-  <p>Lab: <strong>{{ lab }}</strong></p>
-  <p>Test: <strong>{{ test }}</strong></p>
-  <p>Slots Booked: <strong>{{ slots }}</strong></p>
-  <p>Time Slot: <strong>{{ time_slot }}</strong></p>
-  <form action="{{ url_for('payment') }}" method="POST">
-    <button type="submit">CONFIRM BOOKING</button>
+  <h2>Confirm Test Booking</h2>
+  {% if error %}<p style="color:red">{{ error }}</p>{% endif %}
+  <p>Lab: {{ lab }}</p>
+  <p>Test: {{ test }}</p>
+  <p>Slots: {{ slots }}</p>
+  <p>Time Slot: {{ time_slot }}</p>
+  <form action="{{ url_for('payment') }}" method="post">
+    <button type="submit">Pay Now</button>
   </form>
 </body>
 </html>
