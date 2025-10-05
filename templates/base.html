@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MediSlotBook{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2966/2966487.png" type="image/png">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav>
+    <div><a href="{{ url_for('home') }}"><strong>MediSlotBook</strong></a></div>
+    <div>
+      <a href="{{ url_for('hospitals') }}">Hospitals</a>
+      <a href="{{ url_for('labs') }}">Labs</a>
+      <a href="{{ url_for('login') }}">Login</a>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    © 2025 MediSlotBook — All rights reserved
+  </footer>
+
+  <!-- Fade-in Animation -->
+  <script>
+    document.body.style.opacity = 0;
+    window.addEventListener("load", () => {
+      document.body.style.transition = "opacity 0.8s ease-in-out";
+      document.body.style.opacity = 1;
+    });
+  </script>
+</body>
+</html>
