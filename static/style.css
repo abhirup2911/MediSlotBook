@@ -1,166 +1,158 @@
-/* General styling */
+/* ============================
+   MediSlotBook - Professional UI
+   ============================ */
+
+:root {
+  --primary-color: #0078d7;
+  --secondary-color: #009688;
+  --accent-color: #e0f7fa;
+  --text-color: #333;
+  --bg-color: #f9f9fb;
+  --white: #fff;
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  --radius: 12px;
+}
+
 body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background: #e8f5e9;
-  color: #2e7d32;
+  font-family: "Poppins", sans-serif;
+  background-color: var(--bg-color);
   margin: 0;
   padding: 0;
-}
-
-h1, h2 {
-  margin: 20px;
-}
-
-a {
-  text-decoration: none;
-  color: #1b5e20;
-  font-weight: bold;
-}
-
-a:hover {
-  color: #004d00;
-}
-
-/* Buttons */
-button {
-  padding: 10px 20px;
-  margin-top: 20px;
-  background: #2e7d32;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-button:hover {
-  background: #1b5e20;
-}
-
-/* Welcome animation */
-.welcome-screen {
-  position: absolute;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.fade-up {
-  animation: fadeUp 1s forwards;
-}
-
-@keyframes fadeUp {
-  from { opacity: 1; transform: translate(-50%, -50%); }
-  to { opacity: 0; transform: translate(-50%, -150%); }
-}
-
-/* Choice screen */
-.choice-screen {
-  display: none;
-  margin-top: 100px;
-}
-
-.options {
+  color: var(--text-color);
+  min-height: 100vh;
   display: flex;
-  justify-content: center;
-  gap: 30px;
-  margin-top: 30px;
+  flex-direction: column;
 }
 
-.box {
-  background: #a5d6a7;
-  padding: 30px 50px;
-  border-radius: 12px;
+/* Navbar */
+nav {
+  background-color: var(--white);
+  box-shadow: var(--shadow);
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+nav a {
   text-decoration: none;
-  color: #1b5e20;
-  font-size: 20px;
-  font-weight: bold;
+  color: var(--primary-color);
+  font-weight: 600;
+  margin: 0 15px;
   transition: 0.3s;
 }
 
-.box:hover {
-  background: #81c784;
+nav a:hover {
+  color: var(--secondary-color);
 }
 
-/* Search and filter bar */
-.search-filter {
+/* Main container */
+.container {
+  width: 90%;
+  max-width: 650px;
+  margin: 60px auto;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 40px;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+h1, h2, h3 {
+  text-align: center;
+  color: var(--primary-color);
+  margin-bottom: 20px;
+}
+
+/* Forms */
+form {
   display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 20px;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 15px;
 }
 
-.search-filter input,
-.search-filter select {
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #2e7d32;
+input, select {
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 1px solid #ccc;
+  outline: none;
+  transition: 0.3s;
 }
 
-/* Lists (Hospitals, Labs, etc.) */
+input:focus, select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 5px rgba(0, 120, 215, 0.3);
+}
+
+/* Buttons */
+button, .box, a.button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 20px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: 0.3s;
+}
+
+button:hover, .box:hover, a.button:hover {
+  background-color: var(--secondary-color);
+  transform: translateY(-2px);
+}
+
+/* Lists */
 ul {
-  list-style-type: none;
+  list-style: none;
   padding: 0;
 }
 
 li {
-  margin: 10px 0;
-}
-
-li a {
-  background: #c8e6c9;
-  padding: 10px 20px;
-  border-radius: 8px;
-  display: inline-block;
+  background: var(--white);
+  margin: 8px 0;
+  padding: 15px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   transition: 0.3s;
 }
 
-li a:hover {
-  background: #a5d6a7;
+li:hover {
+  transform: scale(1.03);
+  background: var(--accent-color);
 }
 
-/* Booking forms */
-form {
-  margin: 20px auto;
-  max-width: 400px;
-  background: #f1f8e9;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+/* Footer */
+footer {
+  margin-top: auto;
+  background: var(--white);
+  padding: 15px 0;
+  text-align: center;
+  box-shadow: var(--shadow);
+  color: #777;
+  font-size: 14px;
 }
 
-label {
-  font-weight: bold;
-  display: block;
-  margin-top: 10px;
-  margin-bottom: 5px;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-input, select {
-  width: 90%;
-  padding: 8px;
-  margin: 5px 0 15px;
-  border: 1px solid #2e7d32;
-  border-radius: 6px;
-}
+/* Responsive */
+@media (max-width: 600px) {
+  .container {
+    width: 95%;
+    padding: 25px;
+  }
 
-/* Confirmation pages */
-p strong {
-  color: #2e7d32;
-}
-
-p span {
-  color: red;
-  font-weight: bold;
-}
-
-/* Payment page styling */
-.payment-box {
-  background: #f1f8e9;
-  padding: 30px;
-  border-radius: 12px;
-  max-width: 400px;
-  margin: 40px auto;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  nav {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
 }
