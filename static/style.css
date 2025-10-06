@@ -164,3 +164,59 @@ p span {
   margin: 40px auto;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
+
+/* --- Hospital detail layout --- */
+.hospital-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 40px;
+  margin-top: 30px;
+}
+
+.ward-list, .booking-summary {
+  flex: 1;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ward-list h2, .booking-summary h2 {
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 8px;
+  margin-bottom: 15px;
+}
+
+.ward-list ul, .booking-summary ul {
+  list-style: none;
+  padding: 0;
+}
+
+.ward-list li, .booking-summary li {
+  background: #f7f9fc;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  transition: 0.3s ease;
+}
+
+.ward-list li:hover, .booking-summary li:hover {
+  background: #e8f0fe;
+  transform: scale(1.02);
+}
+
+.full {
+  color: red;
+  font-style: italic;
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 20px;
+  text-decoration: none;
+  color: #3498db;
+  font-weight: bold;
+}
+
