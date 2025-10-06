@@ -5,13 +5,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h2>{{ name }} - Tests</h2>
+  <h2>{{ name }} - Wards</h2>
   <ul>
-    {% for test, slots in tests.items() %}
-      <li>
-        <a href="{{ url_for('test_booking', lab=name, test=test) }}">{{ test }}</a>
-        - <span>{{ slots }} total slots available</span>
-      </li>
+    {% for ward, beds in wards.items() %}
+      <li><a href="{{ url_for('ward_booking', hospital=name, ward=ward) }}">{{ ward }}</a> - <span>{{ beds }} beds available</span></li>
     {% endfor %}
   </ul>
 </body>
