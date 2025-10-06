@@ -229,56 +229,41 @@ def lab_detail(name):
         tests=tests_dict,
         lab_bookings=lab_bookings
     )
-
-
-@app.route("/lab/<lab>/test/<test>", methods=["GET", "POST"])
+@app.route("/book_test/<lab>/<test>", methods=["GET", "POST"])
 def test_booking_view(lab, test):
     if request.method == "POST":
-        slots = int(request.form.get("slots", 0))
-        time_slot = request.form.get("time_slot")
+        # Get form data
+        slots = request.form.get("slots")
+        date = request.form.get("date")
+        time = request.form.get("time")
 
-        if time_slot not in time_slots:
-            return render_template("test_booking.html", lab=lab, test=test,
-                                   time_slots=time_slots,
-                                   available_slots={},
-                                   total_available=DEFAULT_TOTAL_SLOTS_PER_TEST,
-                                   error="Invalid time slot selected.")
+        # Validate form fields
+        if not slots or not date or not time:
+            flash("Please fill in all fields before booking.")
+            return redirect(url_for("test_booking_view", lab=lab, test=test))
 
-        total_booked = test_slots[lab][test]["total"]
-        slot_booked = test_slots[lab][test][time_slot]
+        # Convert slots to integer
+        slots = int(slots)
 
-        if total_booked + slots > DEFAULT_TOTAL_SLOTS_PER_TEST:
-            return render_template("test_booking.html", lab=lab, test=test,
-                                   time_slots=time_slots,
-                                   available_slots={},
-                                   total_available=0,
-                                   error="No slots available for this test.")
-
-        if slot_booked + slots > DEFAULT_SLOTS_PER_TIME_SLOT:
-            return render_template("test_booking.html", lab=lab, test=test,
-                                   time_slots=time_slots,
-                                   available_slots={},
-                                   total_available=DEFAULT_TOTAL_SLOTS_PER_TEST - total_booked,
-                                   error="All slots for this time is already full. Please choose some other time.")
-
-        session["pending_booking"] = {
+        # --- Store the booking in global list ---
+        bookings.append({
             "type": "test",
             "lab": lab,
             "test": test,
             "slots": slots,
-            "time_slot": time_slot
-        }
-        return redirect(url_for("confirm_booking"))
+            "date": date,
+            "time": time
+        })
 
-    total_booked = test_slots[lab][test]["total"]
-    total_available = max(0, DEFAULT_TOTAL_SLOTS_PER_TEST - total_booked)
-    available_slots = {ts: max(0, min(DEFAULT_SLOTS_PER_TIME_SLOT - test_slots[lab][test][ts], total_available))
-                       for ts in time_slots}
-    return render_template("test_booking.html", lab=lab, test=test,
-                           time_slots=time_slots,
-                           available_slots=available_slots,
-                           total_available=total_available)
+        # --- Update total booked slots for that lab/test ---
+        test_slots.setdefault(lab, {}).setdefault(test, {}).setdefault("total", 0)
+        test_slots[lab][test]["total"] += slots
 
+        flash(f"{test} booked successfully at {lab} for {date} at {time}!")
+        return redirect(url_for("lab_detail", name=lab))
+
+    # For GET request, show booking form
+    return render_template("test_booking.html", lab=lab, test=test)
 # ---------------------------
 # Confirm Page
 # ---------------------------
