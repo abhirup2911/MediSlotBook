@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
+from datetime import datetime
 
 app = Flask(__name__)
+app.secret_key = "change_this_to_a_secure_random_value"  # set a real secret key for production
 
 # ---------------------------
 # DATABASE INITIALIZATION
@@ -75,29 +77,39 @@ time_slots = [
 # ROUTES
 # ---------------------------
 
+# Root: Welcome page (index.html)
 @app.route("/")
 def home():
-    if 'username' in session:
-        return render_template('choice.html', user={'name': session['username']})
-    else:
-        return redirect(url_for('login'))
+    # show the welcome splash
+    return render_template("index.html")
 
+# Login: create a simple session (guest or fullname)
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        # If user clicked "Login as Guest" button, form includes name "guest"
         if "guest" in request.form:
-            return redirect(url_for("choice"))
+            session['username'] = "Guest"
+        else:
+            # create account — store just a display name in session for now
+            fullname = request.form.get("fullname", "").strip()
+            session['username'] = fullname if fullname else "User"
         return redirect(url_for("choice"))
     return render_template("login.html")
 
 @app.route("/choice")
 def choice():
-    return render_template("choice.html")
+    # show choice page — pass user object expected by choice.html
+    user = {"name": session.get("username", "Guest")}
+    return render_template("choice.html", user=user)
 
+# Hospitals listing (renders the template file you provided: hospital.html)
 @app.route("/hospitals")
 def hospitals_page():
-    return render_template("hospitals.html", hospitals=hospitals)
+    # your template file is hospital.html (singular), so render that
+    return render_template("hospital.html", hospitals=hospitals)
 
+# Hospital detail page
 @app.route("/hospital_detail/<name>")
 def hospital_detail(name):
     conn = sqlite3.connect("database.db")
@@ -119,6 +131,7 @@ def hospital_detail(name):
 
     return render_template("hospital_detail.html", hospital=name, wards=wards, bookings=bookings)
 
+# Ward booking
 @app.route("/ward_booking/<hospital>/<ward>", methods=["GET", "POST"])
 def ward_booking(hospital, ward):
     conn = sqlite3.connect("database.db")
@@ -128,11 +141,17 @@ def ward_booking(hospital, ward):
     available_beds = result[0] if result else 10  # default
 
     if request.method == "POST":
-        beds = int(request.form["beds"])
+        try:
+            beds = int(request.form["beds"])
+        except (ValueError, KeyError):
+            conn.close()
+            return render_template("ward_booking.html", hospital=hospital, ward=ward, available_beds=available_beds, error="Invalid bed count.")
+
         from_date = request.form["from_date"]
         to_date = request.form["to_date"]
 
         if beds > available_beds:
+            conn.close()
             return render_template("ward_booking.html", hospital=hospital, ward=ward, available_beds=available_beds, error="Not enough beds available!")
 
         new_available = available_beds - beds
@@ -141,20 +160,29 @@ def ward_booking(hospital, ward):
                        (hospital, ward, beds, from_date, to_date))
         conn.commit()
         conn.close()
-        return render_template("confirmation.html", message=f"{beds} bed(s) booked in {ward} of {hospital} from {from_date} to {to_date}.")
+
+        # Render confirmation with explicit details (template updated will handle message or details)
+        return render_template("confirmation.html",
+                               message=f"{beds} bed(s) booked in {ward} of {hospital} from {from_date} to {to_date}.",
+                               hospital=hospital, ward=ward, beds=beds, from_date=from_date, to_date=to_date)
 
     conn.close()
     return render_template("ward_booking.html", hospital=hospital, ward=ward, available_beds=available_beds)
 
-@app.route("/pathology")
-def pathology():
-    return render_template("pathology.html", labs=pathology_labs)
+# Pathology labs listing — create a labs_page route (choice.html refers to labs_page)
+@app.route("/labs")
+def labs_page():
+    return render_template("labs.html", labs=pathology_labs)
 
+# Lab detail — pass a dict of tests -> available slots for template that expects items()
 @app.route("/lab_detail/<name>")
 def lab_detail(name):
-    tests = ["Blood Test", "Blood Sugar Test", "Thyroid Test", "Vitamin D Test", "Cholesterol Test"]
-    return render_template("lab_detail.html", lab=name, tests=tests)
+    tests_list = ["Blood Test", "Blood Sugar Test", "Thyroid Test", "Vitamin D Test", "Cholesterol Test"]
+    # make a tests dict so templates that call tests.items() work
+    tests = {t: 10 for t in tests_list}  # default 10 slots each
+    return render_template("lab_detail.html", name=name, tests=tests)
 
+# Test booking
 @app.route("/test_booking/<lab>/<test>", methods=["GET", "POST"])
 def test_booking(lab, test):
     conn = sqlite3.connect("database.db")
@@ -165,17 +193,23 @@ def test_booking(lab, test):
     # Calculate available slots for each time slot
     for slot in time_slots:
         cursor.execute("SELECT SUM(slots) FROM test_bookings WHERE lab_name=? AND test_name=? AND time_slot=?", (lab, test, slot))
-        booked = cursor.fetchone()[0]
-        booked = booked if booked else 0
+        booked_row = cursor.fetchone()
+        booked = booked_row[0] if booked_row and booked_row[0] is not None else 0
         available_slots[slot] = max_slots - booked
 
     total_available = sum(available_slots.values())
 
     if request.method == "POST":
-        slots = int(request.form["slots"])
+        try:
+            slots = int(request.form["slots"])
+        except (ValueError, KeyError):
+            conn.close()
+            return render_template("test_booking.html", lab=lab, test=test, total_available=total_available,
+                                   time_slots=time_slots, available_slots=available_slots,
+                                   error="Invalid slot count.")
         time_slot = request.form["time_slot"]
 
-        if available_slots[time_slot] <= 0:
+        if available_slots.get(time_slot, 0) <= 0:
             conn.close()
             return render_template("test_booking.html", lab=lab, test=test, total_available=total_available,
                                    time_slots=time_slots, available_slots=available_slots,
@@ -185,20 +219,26 @@ def test_booking(lab, test):
                        (lab, test, slots, time_slot))
         conn.commit()
         conn.close()
-        return render_template("confirmation.html", message=f"{slots} slot(s) booked for {test} at {lab} during {time_slot}.")
+        return render_template("confirmation.html", message=f"{slots} slot(s) booked for {test} at {lab} during {time_slot}.",
+                               lab=lab, test=test, slots=slots, time_slot=time_slot)
 
     conn.close()
     return render_template("test_booking.html", lab=lab, test=test, total_available=total_available,
                            time_slots=time_slots, available_slots=available_slots)
 
+# Payment
 @app.route("/payment", methods=["GET", "POST"])
 def payment():
     if request.method == "POST":
+        # In a real app you'd verify payment; here we just show success
         return render_template("payment.html", success="Payment successful!")
-    return render_template("payment.html")
+    # If payment.html expects labs or other context, pass minimal safe context
+    return render_template("payment.html", labs=pathology_labs)
 
+# Generic confirmation route (if used)
 @app.route("/confirmation")
 def confirmation():
+    # This route can show a default confirmation message if no details passed
     return render_template("confirmation.html", message="Booking confirmed!")
 
 if __name__ == "__main__":
