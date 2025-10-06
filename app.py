@@ -79,7 +79,7 @@ time_slots = [
 
 # Root: Welcome page (index.html)
 @app.route("/")
-def home():
+def index():
     # show the welcome splash
     return render_template("index.html")
 
