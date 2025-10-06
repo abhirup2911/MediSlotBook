@@ -3,13 +3,95 @@
 <head>
   <title>{{ name }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .lab-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 40px;
+      margin-top: 30px;
+      padding: 0 30px;
+    }
+
+    .test-list, .booking-summary {
+      flex: 1;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .test-list h2, .booking-summary h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #2e7d32;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+
+    .test-list ul, .booking-summary ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .test-list li, .booking-summary li {
+      background: #f1f8e9;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      transition: 0.3s ease;
+    }
+
+    .test-list li:hover {
+      background: #dcedc8;
+      transform: scale(1.02);
+    }
+
+    .empty {
+      color: gray;
+      font-style: italic;
+    }
+
+    /* Make booking box scrollable if too long */
+    .booking-summary {
+      max-height: 350px;
+      overflow-y: auto;
+    }
+  </style>
 </head>
 <body>
- <h2>{{ name }} - Available Tests</h2>
-<ul>
-  {% for test, available in tests.items() %}
-    <li><a href="{{ url_for('test_booking_view', lab=name, test=test) }}">{{ test }}</a> - <span>{{ available }} slots available</span></li>
-  {% endfor %}
-</ul>
+  <h2>{{ name }} - Available Tests</h2>
+
+  <div class="lab-container">
+    <!-- Left side: available tests -->
+    <div class="test-list">
+      <h2>Available Tests</h2>
+      <ul>
+        {% for test, slots in tests.items() %}
+          <li>
+            <a href="{{ url_for('test_booking', lab=name, test=test) }}">
+              {{ test }}
+            </a> - {{ slots }} slots available
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Right side: existing bookings -->
+    <div class="booking-summary">
+      <h2>Existing Bookings</h2>
+      {% if lab_bookings %}
+        <ul>
+          {% for b in lab_bookings %}
+            <li>
+              {{ b.test }} – {{ b.slots }} slot{{ 's' if b.slots > 1 else '' }} booked
+              on {{ b.date|default('N/A') }} at {{ b.time|default('N/A') }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">No bookings yet for this lab.</p>
+      {% endif %}
+    </div>
+  </div>
 </body>
 </html>
