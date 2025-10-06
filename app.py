@@ -145,7 +145,19 @@ def hospital_detail(name):
         max_booked = max(booked_values.values()) if booked_values else 0
         available = max(0, DEFAULT_BEDS_PER_WARD - max_booked)
         wards_dict[w] = available
-    return render_template("hospital_detail.html", name=name, wards=wards_dict)
+
+    # --- New code: collect all bookings for this hospital ---
+    hospital_bookings = [
+        b for b in bookings
+        if b["type"] == "bed" and b["hospital"] == name
+    ]
+
+    return render_template(
+        "hospital_detail.html",
+        name=name,
+        wards=wards_dict,
+        hospital_bookings=hospital_bookings
+    )
 
 @app.route("/hospital/<hospital>/ward/<ward>", methods=["GET", "POST"])
 def ward_booking_view(hospital, ward):
