@@ -4,6 +4,12 @@ from datetime import datetime, timedelta
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
+@app.template_filter('datetimeformat')
+def datetimeformat(value, format='%d %b %Y'):
+    try:
+        return datetime.strptime(value, '%Y-%m-%d').strftime(format)
+    except Exception:
+        return value
 # ---------------------------
 # Prototype data (initial)
 # ---------------------------
