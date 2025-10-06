@@ -209,12 +209,27 @@ app.add_url_rule('/labs', endpoint='show_labs', view_func=labs_page)
 
 @app.route("/lab/<name>")
 def lab_detail(name):
+    # Build test availability dictionary (your original code)
     tests_dict = {}
     for t in tests:
         total_booked = test_slots.get(name, {}).get(t, {}).get("total", 0)
         available = max(0, DEFAULT_TOTAL_SLOTS_PER_TEST - total_booked)
         tests_dict[t] = available
-    return render_template("lab_detail.html", name=name, tests=tests_dict)
+
+    # --- NEW CODE: Collect all existing bookings for this lab ---
+    lab_bookings = [
+        b for b in bookings
+        if b["type"] == "test" and b["lab"] == name
+    ]
+
+    # Pass everything to the template
+    return render_template(
+        "lab_detail.html",
+        name=name,
+        tests=tests_dict,
+        lab_bookings=lab_bookings
+    )
+
 
 @app.route("/lab/<lab>/test/<test>", methods=["GET", "POST"])
 def test_booking_view(lab, test):
