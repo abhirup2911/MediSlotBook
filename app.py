@@ -77,7 +77,10 @@ time_slots = [
 
 @app.route("/")
 def home():
-    return render_template("choice.html")
+    if 'username' in session:
+        return render_template('choice.html', user={'name': session['username']})
+    else:
+        return redirect(url_for('login'))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
