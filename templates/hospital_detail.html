@@ -1,49 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>{{ hospital }} - Details</title>
+  <title>{{ name }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>{{ hospital }}</h1>
-
-  <div class="hospital-container">
-    <!-- Left: Ward List -->
-    <div class="ward-list">
-      <h2>Available Wards</h2>
-      <ul>
-        {% for ward, beds in wards %}
-          {% if beds > 0 %}
-          <li>
-            <a href="{{ url_for('ward_booking', hospital=hospital, ward=ward) }}">
-              {{ ward }} ({{ beds }} beds available)
-            </a>
-          </li>
-          {% else %}
-          <li class="full">❌ {{ ward }} (No beds available)</li>
-          {% endif %}
-        {% endfor %}
-      </ul>
-      <a href="{{ url_for('hospitals_page') }}" class="back-link">← Back to Hospitals</a>
-    </div>
-
-    <!-- Right: Booking Summary -->
-    <div class="booking-summary">
-      <h2>Current Bookings</h2>
-      {% if bookings %}
-        <ul>
-          {% for ward, beds, from_date, to_date in bookings %}
-            <li>
-              🏥 <strong>{{ ward }}</strong> — {{ beds }} bed{{ 's' if beds > 1 else '' }}
-              booked from <em>{{ from_date }}</em> to <em>{{ to_date }}</em>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>No current bookings for this hospital.</p>
-      {% endif %}
-    </div>
-  </div>
+  <h2>{{ name }} - Wards</h2>
+  <ul>
+    {% for ward, beds in wards.items() %}
+      <li><a href="{{ url_for('ward_booking', hospital=name, ward=ward) }}">{{ ward }}</a> - <span>{{ beds }} beds available</span></li>
+    {% endfor %}
+  </ul>
 </body>
 </html>
+
