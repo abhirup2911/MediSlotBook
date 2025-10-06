@@ -68,7 +68,7 @@
       <ul>
         {% for test, slots in tests.items() %}
           <li>
-            <a href="{{ url_for('test_booking', lab=name, test=test) }}">
+            <a href="{{ url_for('test_booking_view', lab=name, test=test) }}">
               {{ test }}
             </a> - {{ slots }} slots available
           </li>
