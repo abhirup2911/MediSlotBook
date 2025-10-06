@@ -3,14 +3,89 @@
 <head>
   <title>{{ name }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .hospital-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 40px;
+      margin-top: 30px;
+      padding: 0 30px;
+    }
+
+    .ward-list, .booking-summary {
+      flex: 1;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .ward-list h2, .booking-summary h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #2e7d32;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+
+    .ward-list ul, .booking-summary ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .ward-list li, .booking-summary li {
+      background: #f1f8e9;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      transition: 0.3s ease;
+    }
+
+    .ward-list li:hover {
+      background: #dcedc8;
+      transform: scale(1.02);
+    }
+
+    .empty {
+      color: gray;
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
   <h2>{{ name }} - Wards</h2>
-  <ul>
-    {% for ward, beds in wards.items() %}
-      <li><a href="{{ url_for('ward_booking', hospital=name, ward=ward) }}">{{ ward }}</a> - <span>{{ beds }} beds available</span></li>
-    {% endfor %}
-  </ul>
+
+  <div class="hospital-container">
+    <!-- Left side: wards -->
+    <div class="ward-list">
+      <h2>Available Wards</h2>
+      <ul>
+        {% for ward, beds in wards.items() %}
+          <li>
+            <a href="{{ url_for('ward_booking', hospital=name, ward=ward) }}">{{ ward }}</a>
+            - <span>{{ beds }} beds available</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Right side: current bookings -->
+    <div class="booking-summary">
+      <h2>Existing Bookings</h2>
+      {% if hospital_bookings %}
+        <ul>
+          {% for b in hospital_bookings %}
+            <li>
+              {{ b.ward }} – {{ b.beds }} bed{{ 's' if b.beds > 1 else '' }} booked
+              from {{ b.from|datetimeformat('%d %b %Y') if b.from else b.from }}
+              to {{ b.to|datetimeformat('%d %b %Y') if b.to else b.to }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">No bookings yet for this hospital.</p>
+      {% endif %}
+    </div>
+  </div>
 </body>
 </html>
-
