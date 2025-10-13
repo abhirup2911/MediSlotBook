@@ -116,6 +116,9 @@ def home():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        # Clear any leftover pending booking
+        session.pop("pending_booking", None)
+
         if "guest" in request.form:
             session["user"] = {"name": "Guest"}
             return redirect(url_for("choice"))
@@ -127,10 +130,9 @@ def login():
                 "email": request.form.get("email"),
                 "phone": request.form.get("phone")
             }
-            if session.get("pending_booking"):
-                return redirect(url_for("confirm_booking"))
             return redirect(url_for("choice"))
     return render_template("login.html")
+
 
 @app.route("/choice")
 def choice():
