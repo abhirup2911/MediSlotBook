@@ -236,47 +236,53 @@ def lab_detail(name):
 
 @app.route("/book_test/<lab>/<test>", methods=["GET", "POST"])
 def test_booking_view(lab, test):
+    # Predefined time slots
+    time_slots = [
+        "6:00AM - 7:00AM",
+        "7:00AM - 8:00AM",
+        "8:00AM - 9:00AM",
+        "9:00AM - 10:00AM",
+        "5:00PM - 6:00PM",
+        "6:00PM - 7:00PM",
+        "7:00PM - 8:00PM"
+    ]
+
+    # Compute available time slots based on current bookings
+    available_times = []
+    for ts in time_slots:
+        booked_count = test_slots.get(lab, {}).get(test, {}).get(ts, 0)
+        if booked_count < DEFAULT_SLOTS_PER_TIME_SLOT:
+            available_times.append(ts)
+
     if request.method == "POST":
         slots = request.form.get("slots")
         date = request.form.get("date")
-        time = request.form.get("time")
+        time_slot = request.form.get("time")
 
-        if not slots or not date or not time:
+        if not slots or not date or not time_slot:
             flash("Please fill in all fields before booking.")
             return redirect(url_for("test_booking_view", lab=lab, test=test))
 
-        slots = int(slots)
-
-        # Store the booking with user info and proper keys
-        bookings.append({
+        # Save as pending booking in session
+        session["pending_booking"] = {
             "type": "test",
             "lab": lab,
             "test": test,
-            "slots": slots,
+            "slots": int(slots),
             "date": date,
-            "time_slot": time,          # Use time_slot key for consistency
-            "user": session.get("user")  # Include the logged-in user info
-        })
+            "time_slot": time_slot
+        }
 
-        # Update the slot counters
-        test_slots.setdefault(lab, {}).setdefault(test, {}).setdefault("total", 0)
-        test_slots[lab][test]["total"] += slots
-        test_slots[lab][test].setdefault(time, 0)
-        test_slots[lab][test][time] += slots
+        # Redirect to confirm page
+        return redirect(url_for("confirm_booking"))
 
-        # Flash only for the user, not institutions
-        flash(f"{test} booked successfully at {lab} for {date} at {time}!")
+    return render_template(
+        "test_booking.html",
+        lab=lab,
+        test=test,
+        available_times=available_times
+    )
 
-        return redirect(url_for("lab_detail", name=lab))
-
-    # Get available times for dropdown
-    available_times = []
-    for ts in time_slots:
-        booked = test_slots.get(lab, {}).get(test, {}).get(ts, 0)
-        if booked < DEFAULT_SLOTS_PER_TIME_SLOT:
-            available_times.append(ts)
-
-    return render_template("test_booking.html", lab=lab, test=test, available_times=available_times)
 
 # ---------------------------
 # Confirm and Payment
