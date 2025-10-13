@@ -50,26 +50,26 @@
 <body>
   <div class="container">
     <h2>{{ test }} Booking</h2>
+    {% if available_times %}
     <form method="POST">
       <label>Date:</label>
-      <input type="date" name="date" required>
+      <input type="date" name="date" required min="{{ today }}">
 
       <label>Time:</label>
       <select name="time" required>
-        {% if available_times %}
-          {% for t in available_times %}
-            <option value="{{ t }}">{{ t }}</option>
-          {% endfor %}
-        {% else %}
-          <option disabled>No slots available</option>
-        {% endif %}
+        {% for t in available_times %}
+          <option value="{{ t }}">{{ t }}</option>
+        {% endfor %}
       </select>
 
       <label>Number of Slots:</label>
-      <input type="number" name="slots" min="1" required>
+      <input type="number" name="slots" min="1" max="{{ max_slots }}" value="1" required>
 
       <button type="submit">Confirm Booking</button>
     </form>
+    {% else %}
+      <p style="color:red; text-align:center;">No available slots for this test at the moment. Please check back later.</p>
+    {% endif %}
   </div>
 </body>
 </html>
