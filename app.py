@@ -243,26 +243,20 @@ def test_booking_view(lab, test):
             flash("Please fill in all fields before booking.")
             return redirect(url_for("test_booking_view", lab=lab, test=test))
 
-        slots = int(slots)
-        user = session.get("user") or {"name": "Guest", "email": ""}
-
-        bookings.append({
+        # Store pending booking in session for confirmation
+        session["pending_booking"] = {
             "type": "test",
             "lab": lab,
             "test": test,
-            "slots": slots,
+            "slots": int(slots),
             "date": date,
-            "time_slot": time,  # rename 'time' to 'time_slot'
-            "user": user
-        })
+            "time_slot": time
+        }
 
-        test_slots.setdefault(lab, {}).setdefault(test, {}).setdefault("total", 0)
-        test_slots[lab][test]["total"] += slots
-        test_slots[lab][test][time] = test_slots[lab][test].get(time, 0) + slots
+        # Redirect to confirmation page
+        return redirect(url_for("confirm_booking"))
 
-        flash(f"{test} booked successfully at {lab} for {date} at {time}!")
-        return redirect(url_for("lab_detail", name=lab))
-
+    # GET request: render the booking form
     return render_template("test_booking.html", lab=lab, test=test)
 # ---------------------------
 # Confirm and Payment
