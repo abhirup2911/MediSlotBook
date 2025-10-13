@@ -20,14 +20,6 @@
 <div class="container my-5">
     <h2 class="mb-4 text-center text-primary">{{ institution }} Dashboard</h2>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for msg in messages %}
-          <div class="alert alert-success text-center">{{ msg }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
     {% if related_bookings %}
         <div class="table-responsive shadow-sm">
             <table class="table table-striped align-middle">
@@ -53,7 +45,6 @@
                                 Guest
                             {% endif %}
                         </td>
-
                         <td>
                             {% if b.type == "bed" %}
                                 Ward: <strong>{{ b.ward }}</strong><br>
@@ -63,13 +54,12 @@
                                 Slots: <strong>{{ b.slots }}</strong>
                             {% endif %}
                         </td>
-
                         <td>
                             {% if b.type == "bed" %}
                                 From: {{ b.from }}<br>To: {{ b.to }}
                             {% elif b.type == "test" %}
                                 Date: {{ b.date }}<br>
-                                Time: {{ b.time }}
+                                Time: {{ b.time_slot }}
                             {% endif %}
                         </td>
                     </tr>
