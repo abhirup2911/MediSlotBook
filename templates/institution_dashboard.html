@@ -37,7 +37,7 @@
                         <th>Type</th>
                         <th>User</th>
                         <th>Details</th>
-                        <th>Dates / Time</th>
+                        <th>Date / Time</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -68,7 +68,8 @@
                             {% if b.type == "bed" %}
                                 From: {{ b.from }}<br>To: {{ b.to }}
                             {% elif b.type == "test" %}
-                                Time: {{ b.time_slot }}
+                                Date: {{ b.date }}<br>
+                                Time: {{ b.time }}
                             {% endif %}
                         </td>
                     </tr>
