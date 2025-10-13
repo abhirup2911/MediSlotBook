@@ -247,30 +247,45 @@ def test_booking_view(lab, test):
 
         slots = int(slots)
 
-        # Store booking in session first
-        session["pending_booking"] = {
+        # Initialize test_slots if missing
+        test_slots.setdefault(lab, {}).setdefault(test, {}).setdefault("total", 0)
+        test_slots[lab][test].setdefault(time_slot, 0)
+
+        # Check if requested slots exceed limits
+        if test_slots[lab][test][time_slot] + slots > DEFAULT_SLOTS_PER_TIME_SLOT:
+            flash(f"Only {DEFAULT_SLOTS_PER_TIME_SLOT - test_slots[lab][test][time_slot]} slots left at {time_slot}")
+            return redirect(url_for("test_booking_view", lab=lab, test=test))
+
+        # Update bookings and slot counters
+        bookings.append({
             "type": "test",
+            "user": session.get("user"),  # Save user info
             "lab": lab,
             "test": test,
             "slots": slots,
-            "time_slot": time_slot,
-            "date": date
-        }
+            "date": date,
+            "time_slot": time_slot
+        })
 
-        return redirect(url_for("confirm_booking"))
+        test_slots[lab][test]["total"] += slots
+        test_slots[lab][test][time_slot] += slots
 
-    # For GET, show only available time slots
-    available_time_slots = []
-    for ts in time_slots:
-        total_booked = test_slots.get(lab, {}).get(test, {}).get("total", 0)
-        booked_for_slot = test_slots.get(lab, {}).get(test, {}).get(ts, 0)
-        if total_booked < DEFAULT_TOTAL_SLOTS_PER_TEST and booked_for_slot < DEFAULT_SLOTS_PER_TIME_SLOT:
-            available_time_slots.append(ts)
+        flash(f"{test} booked successfully at {lab} for {date} at {time_slot}!")
+        return redirect(url_for("lab_detail", name=lab))
 
-    return render_template("test_booking.html",
-                           lab=lab,
-                           test=test,
-                           time_slots=available_time_slots)
+    # For GET: show only available time slots
+    available_times = [
+        ts for ts in time_slots
+        if test_slots.get(lab, {}).get(test, {}).get(ts, 0) < DEFAULT_SLOTS_PER_TIME_SLOT
+    ]
+
+    return render_template(
+        "test_booking.html",
+        lab=lab,
+        test=test,
+        available_times=available_times
+    )
+
 # ---------------------------
 # Confirm and Payment
 # ---------------------------
