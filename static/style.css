@@ -1,4 +1,6 @@
-/* General styling */
+/* ---------------------------------------------------
+   General Styling
+--------------------------------------------------- */
 body {
   font-family: Arial, sans-serif;
   text-align: center;
@@ -22,40 +24,62 @@ a:hover {
   color: #004d00;
 }
 
-/* Buttons */
+/* ---------------------------------------------------
+   Buttons
+--------------------------------------------------- */
 button {
-  padding: 10px 20px;
-  margin-top: 20px;
+  display: inline-block;
+  width: 220px;
+  padding: 12px 0;
+  margin-top: 15px;
   background: #2e7d32;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
 
 button:hover {
   background: #1b5e20;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-/* Welcome animation */
+/* Special color for Institution Login button */
+button.institution {
+  background: #43a047;
+}
+
+button.institution:hover {
+  background: #2e7d32;
+}
+
+/* ---------------------------------------------------
+   Welcome Screen
+--------------------------------------------------- */
 .welcome-screen {
   position: absolute;
   top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
+  background: #f1f8e9;
+  padding: 40px 60px;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
-.fade-up {
-  animation: fadeUp 1s forwards;
+.welcome-screen h1 {
+  margin-bottom: 30px;
+  color: #1b5e20;
 }
 
-@keyframes fadeUp {
-  from { opacity: 1; transform: translate(-50%, -50%); }
-  to { opacity: 0; transform: translate(-50%, -150%); }
-}
-
-/* Choice screen */
+/* ---------------------------------------------------
+   Choice Screen
+--------------------------------------------------- */
 .choice-screen {
   display: none;
   margin-top: 100px;
@@ -83,7 +107,9 @@ button:hover {
   background: #81c784;
 }
 
-/* Search and filter bar */
+/* ---------------------------------------------------
+   Search & Filter
+--------------------------------------------------- */
 .search-filter {
   display: flex;
   justify-content: center;
@@ -98,7 +124,9 @@ button:hover {
   border: 1px solid #2e7d32;
 }
 
-/* Lists (Hospitals, Labs, etc.) */
+/* ---------------------------------------------------
+   Lists (Hospitals, Labs, etc.)
+--------------------------------------------------- */
 ul {
   list-style-type: none;
   padding: 0;
@@ -120,7 +148,9 @@ li a:hover {
   background: #a5d6a7;
 }
 
-/* Booking forms */
+/* ---------------------------------------------------
+   Booking Forms
+--------------------------------------------------- */
 form {
   margin: 20px auto;
   max-width: 400px;
@@ -145,7 +175,9 @@ input, select {
   border-radius: 6px;
 }
 
-/* Confirmation pages */
+/* ---------------------------------------------------
+   Confirmation Pages
+--------------------------------------------------- */
 p strong {
   color: #2e7d32;
 }
@@ -155,7 +187,9 @@ p span {
   font-weight: bold;
 }
 
-/* Payment page styling */
+/* ---------------------------------------------------
+   Payment Page
+--------------------------------------------------- */
 .payment-box {
   background: #f1f8e9;
   padding: 30px;
@@ -165,7 +199,9 @@ p span {
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
-/* --- Hospital detail layout --- */
+/* ---------------------------------------------------
+   Hospital Detail Layout
+--------------------------------------------------- */
 .hospital-container {
   display: flex;
   justify-content: space-between;
@@ -220,3 +256,14 @@ p span {
   font-weight: bold;
 }
 
+/* ---------------------------------------------------
+   Animations
+--------------------------------------------------- */
+.fade-up {
+  animation: fadeUp 1s forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 1; transform: translate(-50%, -50%); }
+  to { opacity: 0; transform: translate(-50%, -150%); }
+}
