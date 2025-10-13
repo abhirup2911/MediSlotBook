@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
+bookings = []
 app.secret_key = "supersecretkey"
 
 @app.template_filter('datetimeformat')
