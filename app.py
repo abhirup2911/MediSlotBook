@@ -244,6 +244,7 @@ def test_booking_view(lab, test):
             return redirect(url_for("test_booking_view", lab=lab, test=test))
 
         slots = int(slots)
+        user = session.get("user") or {"name": "Guest", "email": ""}
 
         bookings.append({
             "type": "test",
@@ -251,18 +252,18 @@ def test_booking_view(lab, test):
             "test": test,
             "slots": slots,
             "date": date,
-            "time": time
+            "time_slot": time,  # rename 'time' to 'time_slot'
+            "user": user
         })
 
         test_slots.setdefault(lab, {}).setdefault(test, {}).setdefault("total", 0)
         test_slots[lab][test]["total"] += slots
+        test_slots[lab][test][time] = test_slots[lab][test].get(time, 0) + slots
 
         flash(f"{test} booked successfully at {lab} for {date} at {time}!")
         return redirect(url_for("lab_detail", name=lab))
 
     return render_template("test_booking.html", lab=lab, test=test)
-
-
 # ---------------------------
 # Confirm and Payment
 # ---------------------------
