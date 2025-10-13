@@ -237,27 +237,38 @@ def test_booking_view(lab, test):
     if request.method == "POST":
         slots = request.form.get("slots")
         date = request.form.get("date")
-        time = request.form.get("time")
+        time_slot = request.form.get("time")
 
-        if not slots or not date or not time:
+        if not slots or not date or not time_slot:
             flash("Please fill in all fields before booking.")
             return redirect(url_for("test_booking_view", lab=lab, test=test))
 
-        # Store pending booking in session for confirmation
+        slots = int(slots)
+
+        # Store booking in session first
         session["pending_booking"] = {
             "type": "test",
             "lab": lab,
             "test": test,
-            "slots": int(slots),
-            "date": date,
-            "time_slot": time
+            "slots": slots,
+            "time_slot": time_slot,
+            "date": date
         }
 
-        # Redirect to confirmation page
         return redirect(url_for("confirm_booking"))
 
-    # GET request: render the booking form
-    return render_template("test_booking.html", lab=lab, test=test)
+    # For GET, show only available time slots
+    available_time_slots = []
+    for ts in time_slots:
+        total_booked = test_slots.get(lab, {}).get(test, {}).get("total", 0)
+        booked_for_slot = test_slots.get(lab, {}).get(test, {}).get(ts, 0)
+        if total_booked < DEFAULT_TOTAL_SLOTS_PER_TEST and booked_for_slot < DEFAULT_SLOTS_PER_TIME_SLOT:
+            available_time_slots.append(ts)
+
+    return render_template("test_booking.html",
+                           lab=lab,
+                           test=test,
+                           time_slots=available_time_slots)
 # ---------------------------
 # Confirm and Payment
 # ---------------------------
