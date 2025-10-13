@@ -11,6 +11,8 @@ def datetimeformat(value, format='%d %b %Y'):
         return datetime.strptime(value, '%Y-%m-%d').strftime(format)
     except Exception:
         return value
+
+
 # ---------------------------
 # Prototype data (initial)
 # ---------------------------
@@ -70,17 +72,16 @@ time_slots = [
 # Capacity (prototype)
 # ---------------------------
 DEFAULT_BEDS_PER_WARD = 10
-DEFAULT_TOTAL_SLOTS_PER_TEST = 10    # Total quota per test across all slots
-DEFAULT_SLOTS_PER_TIME_SLOT = 3      # Max bookings per single time slot
+DEFAULT_TOTAL_SLOTS_PER_TEST = 10
+DEFAULT_SLOTS_PER_TIME_SLOT = 3
 
 # ---------------------------
-# In-memory booking stores (prototype)
+# In-memory booking stores
 # ---------------------------
 beds_calendar = {}
-test_slots = {}   # test_slots[lab][test]["total"], test_slots[lab][test][time_slot]
+test_slots = {}
 bookings = []
 
-# initialize calendars
 for h in hospitals:
     beds_calendar[h] = {}
     for w in wards:
@@ -93,6 +94,7 @@ for l in labs:
         for ts in time_slots:
             test_slots[l][t][ts] = 0
 
+
 # ---------------------------
 # Helpers
 # ---------------------------
@@ -102,6 +104,7 @@ def daterange(start_date, end_date):
 
 def parse_date(d):
     return datetime.strptime(d, "%Y-%m-%d").date()
+
 
 # ---------------------------
 # Routes: home, login, choice
@@ -135,6 +138,7 @@ def choice():
         return redirect(url_for("login"))
     return render_template("choice.html", user=session["user"])
 
+
 # ---------------------------
 # Hospitals: list, wards, book-bed
 # ---------------------------
@@ -153,7 +157,6 @@ def hospital_detail(name):
         available = max(0, DEFAULT_BEDS_PER_WARD - max_booked)
         wards_dict[w] = available
 
-    # --- New code: collect all bookings for this hospital ---
     hospital_bookings = [
         b for b in bookings
         if b["type"] == "bed" and b["hospital"] == name
@@ -199,6 +202,7 @@ def ward_booking_view(hospital, ward):
 
 app.add_url_rule('/hospital/<hospital>/ward/<ward>', endpoint='ward_booking', view_func=ward_booking_view, methods=['GET','POST'])
 
+
 # ---------------------------
 # Labs: list, tests, book-test
 # ---------------------------
@@ -210,43 +214,37 @@ app.add_url_rule('/labs', endpoint='show_labs', view_func=labs_page)
 
 @app.route("/lab/<name>")
 def lab_detail(name):
-    # Build test availability dictionary (your original code)
     tests_dict = {}
     for t in tests:
         total_booked = test_slots.get(name, {}).get(t, {}).get("total", 0)
         available = max(0, DEFAULT_TOTAL_SLOTS_PER_TEST - total_booked)
         tests_dict[t] = available
 
-    # --- NEW CODE: Collect all existing bookings for this lab ---
     lab_bookings = [
         b for b in bookings
         if b["type"] == "test" and b["lab"] == name
     ]
 
-    # Pass everything to the template
     return render_template(
         "lab_detail.html",
         name=name,
         tests=tests_dict,
         lab_bookings=lab_bookings
     )
+
 @app.route("/book_test/<lab>/<test>", methods=["GET", "POST"])
 def test_booking_view(lab, test):
     if request.method == "POST":
-        # Get form data
         slots = request.form.get("slots")
         date = request.form.get("date")
         time = request.form.get("time")
 
-        # Validate form fields
         if not slots or not date or not time:
             flash("Please fill in all fields before booking.")
             return redirect(url_for("test_booking_view", lab=lab, test=test))
 
-        # Convert slots to integer
         slots = int(slots)
 
-        # --- Store the booking in global list ---
         bookings.append({
             "type": "test",
             "lab": lab,
@@ -256,17 +254,17 @@ def test_booking_view(lab, test):
             "time": time
         })
 
-        # --- Update total booked slots for that lab/test ---
         test_slots.setdefault(lab, {}).setdefault(test, {}).setdefault("total", 0)
         test_slots[lab][test]["total"] += slots
 
         flash(f"{test} booked successfully at {lab} for {date} at {time}!")
         return redirect(url_for("lab_detail", name=lab))
 
-    # For GET request, show booking form
     return render_template("test_booking.html", lab=lab, test=test)
+
+
 # ---------------------------
-# Confirm Page
+# Confirm and Payment
 # ---------------------------
 @app.route("/confirm_booking")
 def confirm_booking():
@@ -287,9 +285,6 @@ def confirm_booking():
                                slots=pending["slots"],
                                time_slot=pending["time_slot"])
 
-# ---------------------------
-# Payment processing
-# ---------------------------
 @app.route("/payment", methods=["POST"])
 def payment():
     pending = session.get("pending_booking")
@@ -368,12 +363,85 @@ def payment():
     else:
         return render_template("payment.html", error="Unknown booking type.")
 
+
 # ---------------------------
-# Debug helper
+# Institution Login & Dashboard
+# ---------------------------
+
+institution_credentials = {
+    # Hospitals
+    "IPGMER & SSKM Hospital": "ipgmer123",
+    "Chittaranjan National Cancer Institute": "cnci123",
+    "Saroj Gupta Cancer Centre & Research Institute": "saroj123",
+    "Belle Vue Clinic": "belle123",
+    "AMRI Hospitals": "amri123",
+    "Apollo Gleneagles Hospital": "apollo123",
+    "Medica Superspecialty Hospital": "medica123",
+    "Fortis Hospital, Anandapur": "fortis123",
+    "Rabindranath Tagore International Institute of Cardiac Sciences": "rtiics123",
+    "Ruby General Hospital": "ruby123",
+
+    # Labs
+    "Dr Lal PathLabs": "lal123",
+    "Metropolis Healthcare": "metro123",
+    "SRL Diagnostics": "srl123",
+    "Apollo Diagnostics": "apolloDiag123",
+    "Thyrocare": "thyro123",
+    "Vijaya Diagnostic Centre": "vijaya123",
+    "Pathkind Labs": "pathkind123",
+    "Oncquest Laboratories": "oncquest123",
+    "Medall Diagnostics": "medall123",
+    "Quest Diagnostics India": "quest123",
+    "Healthians": "health123"
+}
+
+@app.route("/institution_login", methods=["GET", "POST"])
+def institution_login():
+    if request.method == "POST":
+        name = request.form.get("institution_name")
+        password = request.form.get("password")
+        if name in institution_credentials and institution_credentials[name] == password:
+            session["institution"] = name
+            return redirect(url_for("institution_dashboard"))
+        else:
+            flash("Invalid credentials. Please try again.")
+    return render_template("institution_login.html", hospitals=hospitals, labs=labs)
+
+@app.route("/institution_dashboard")
+def institution_dashboard():
+    if "institution" not in session:
+        return redirect(url_for("institution_login"))
+    institution_name = session["institution"]
+
+    related_bookings = []
+    for b in bookings:
+        if b["type"] == "bed" and b["hospital"] == institution_name:
+            related_bookings.append(b)
+        elif b["type"] == "test" and b["lab"] == institution_name:
+            related_bookings.append(b)
+
+    return render_template("institution_dashboard.html",
+                           institution=institution_name,
+                           related_bookings=related_bookings)
+
+
+@app.route("/institution_logout")
+def institution_logout():
+    session.pop("institution", None)
+    flash("Logged out successfully.")
+    return redirect(url_for("institution_login"))
+
+
+# ---------------------------
+# Debug Helper
 # ---------------------------
 @app.route("/_debug_bookings")
 def debug_bookings():
     return {"bookings": bookings, "beds_calendar": beds_calendar, "test_slots": test_slots}
 
+
+# ---------------------------
+# Run
+# ---------------------------
 if __name__ == "__main__":
     app.run(debug=True)
