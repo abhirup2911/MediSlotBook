@@ -239,52 +239,44 @@ def test_booking_view(lab, test):
     if request.method == "POST":
         slots = request.form.get("slots")
         date = request.form.get("date")
-        time_slot = request.form.get("time")
+        time = request.form.get("time")
 
-        if not slots or not date or not time_slot:
+        if not slots or not date or not time:
             flash("Please fill in all fields before booking.")
             return redirect(url_for("test_booking_view", lab=lab, test=test))
 
         slots = int(slots)
 
-        # Initialize test_slots if missing
-        test_slots.setdefault(lab, {}).setdefault(test, {}).setdefault("total", 0)
-        test_slots[lab][test].setdefault(time_slot, 0)
-
-        # Check if requested slots exceed limits
-        if test_slots[lab][test][time_slot] + slots > DEFAULT_SLOTS_PER_TIME_SLOT:
-            flash(f"Only {DEFAULT_SLOTS_PER_TIME_SLOT - test_slots[lab][test][time_slot]} slots left at {time_slot}")
-            return redirect(url_for("test_booking_view", lab=lab, test=test))
-
-        # Update bookings and slot counters
+        # Store the booking with user info and proper keys
         bookings.append({
             "type": "test",
-            "user": session.get("user"),  # Save user info
             "lab": lab,
             "test": test,
             "slots": slots,
             "date": date,
-            "time_slot": time_slot
+            "time_slot": time,          # Use time_slot key for consistency
+            "user": session.get("user")  # Include the logged-in user info
         })
 
+        # Update the slot counters
+        test_slots.setdefault(lab, {}).setdefault(test, {}).setdefault("total", 0)
         test_slots[lab][test]["total"] += slots
-        test_slots[lab][test][time_slot] += slots
+        test_slots[lab][test].setdefault(time, 0)
+        test_slots[lab][test][time] += slots
 
-        flash(f"{test} booked successfully at {lab} for {date} at {time_slot}!")
+        # Flash only for the user, not institutions
+        flash(f"{test} booked successfully at {lab} for {date} at {time}!")
+
         return redirect(url_for("lab_detail", name=lab))
 
-    # For GET: show only available time slots
-    available_times = [
-        ts for ts in time_slots
-        if test_slots.get(lab, {}).get(test, {}).get(ts, 0) < DEFAULT_SLOTS_PER_TIME_SLOT
-    ]
+    # Get available times for dropdown
+    available_times = []
+    for ts in time_slots:
+        booked = test_slots.get(lab, {}).get(test, {}).get(ts, 0)
+        if booked < DEFAULT_SLOTS_PER_TIME_SLOT:
+            available_times.append(ts)
 
-    return render_template(
-        "test_booking.html",
-        lab=lab,
-        test=test,
-        available_times=available_times
-    )
+    return render_template("test_booking.html", lab=lab, test=test, available_times=available_times)
 
 # ---------------------------
 # Confirm and Payment
