@@ -7,8 +7,17 @@
 <body>
   <div class="welcome-screen">
     <h1>Welcome to MediSlotBook</h1>
+
+    <!-- User Login / Booking -->
     <form action="{{ url_for('login') }}">
       <button type="submit">Enter</button>
+    </form>
+
+    <!-- Institution Login -->
+    <form action="{{ url_for('institution_login') }}">
+      <button type="submit" style="margin-top: 15px; background-color: #4CAF50; color: white;">
+        Institution Login
+      </button>
     </form>
   </div>
 </body>
