@@ -349,46 +349,59 @@ def payment():
         })
         session.pop("pending_booking", None)
         return render_template("payment.html", success="Your bed(s) have been booked. Thank you for using MediSlotBook.")
-
-    elif pending["type"] == "test":
+    
+elif pending["type"] == "test":
     lab = pending["lab"]
     test_name = pending["test"]
     slots_requested = int(pending["slots"])
-    date = pending["date"]
     time_slot = pending["time_slot"]
+    date = pending["date"]
 
-    # initialize date dict if not present
+    # Initialize data structures if not present
+    if lab not in test_slots:
+        test_slots[lab] = {}
+    if test_name not in test_slots[lab]:
+        test_slots[lab][test_name] = {}
     if date not in test_slots[lab][test_name]:
-        test_slots[lab][test_name][date] = {}
+        test_slots[lab][test_name][date] = {"total": 0}
+        for ts in time_slots:
+            test_slots[lab][test_name][date][ts] = 0
 
-    date_slots = test_slots[lab][test_name][date]
-    current_count = date_slots.get(time_slot, 0)
+    total_booked = test_slots[lab][test_name][date]["total"]
+    slot_booked = test_slots[lab][test_name][date][time_slot]
 
-    if current_count + slots_requested > DEFAULT_SLOTS_PER_TIME_SLOT:
+    if total_booked + slots_requested > DEFAULT_TOTAL_SLOTS_PER_TEST:
+        msg = "No slots left for this test."
+        return render_template("confirm_test_booking.html",
+                               lab=lab, test=test_name,
+                               slots=slots_requested,
+                               time_slot=time_slot,
+                               date=date,
+                               error=msg)
+
+    if slot_booked + slots_requested > DEFAULT_SLOTS_PER_TIME_SLOT:
         msg = "All slots for this time are already full. Please choose another time."
         return render_template("confirm_test_booking.html",
                                lab=lab, test=test_name,
                                slots=slots_requested,
-                               date=date,
                                time_slot=time_slot,
+                               date=date,
                                error=msg)
 
-    # Book it
-    date_slots[time_slot] = current_count + slots_requested
+    test_slots[lab][test_name][date]["total"] += slots_requested
+    test_slots[lab][test_name][date][time_slot] += slots_requested
     bookings.append({
-        "type": "test",
-        "user": user,
-        "lab": lab,
-        "test": test_name,
+        "type": "test", "user": user,
+        "lab": lab, "test": test_name,
         "slots": slots_requested,
-        "date": date,
-        "time_slot": time_slot
+        "time_slot": time_slot,
+        "date": date
     })
+
     session.pop("pending_booking", None)
     return render_template("payment.html", success="Your slot(s) have been booked. Thank you for using MediSlotBook.")
 
-
-    else:
+else:
         return render_template("payment.html", error="Unknown booking type.")
 
 
