@@ -1,75 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Book Test - {{ test }}</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f8f9fa;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      width: 400px;
-      margin: 80px auto;
-      padding: 25px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      margin-top: 20px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Test - {{ test }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            background: #fff;
+            margin: 60px auto;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #222;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="number"],
+        input[type="date"],
+        select {
+            padding: 10px;
+            font-size: 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        select option[disabled] {
+            color: grey;
+        }
+
+        button {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .back {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .back a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .back a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h2>{{ test }} Booking</h2>
-    {% if available_times %}
-    <form method="POST">
-      <label>Date:</label>
-      <input type="date" name="date" required min="{{ today }}">
+    <div class="container">
+        <h2>Book Your Test</h2>
 
-      <label>Time:</label>
-      <select name="time" required>
-        {% for t in available_times %}
-          <option value="{{ t }}">{{ t }}</option>
-        {% endfor %}
-      </select>
+        <form method="POST">
+            <div>
+                <label>Lab:</label>
+                <p><strong>{{ lab }}</strong></p>
+            </div>
 
-      <label>Number of Slots:</label>
-      <input type="number" name="slots" min="1" max="{{ max_slots }}" value="1" required>
+            <div>
+                <label>Test:</label>
+                <p><strong>{{ test }}</strong></p>
+            </div>
 
-      <button type="submit">Confirm Booking</button>
-    </form>
-    {% else %}
-      <p style="color:red; text-align:center;">No available slots for this test at the moment. Please check back later.</p>
-    {% endif %}
-  </div>
+            <div>
+                <label for="slots">Number of Slots:</label>
+                <input type="number" id="slots" name="slots" min="1" max="{{ max_slots }}" required>
+            </div>
+
+            <div>
+                <label for="date">Select Date:</label>
+                <input type="date" id="date" name="date" min="{{ today }}" required>
+            </div>
+
+            <div>
+                <label for="time">Select Time Slot:</label>
+                <select id="time" name="time" required>
+                    {% for slot in available_times %}
+                        {% if slot.available %}
+                            <option value="{{ slot.time }}">{{ slot.time }}</option>
+                        {% else %}
+                            <option value="{{ slot.time }}" disabled title="Sorry, all slots for this time are already full. Please choose a different time." style="color: grey;">
+                                {{ slot.time }} (Full)
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit">Proceed to Confirmation</button>
+        </form>
+
+        <div class="back">
+            <a href="{{ url_for('pathology_labs') }}">← Back to Labs</a>
+        </div>
+    </div>
 </body>
 </html>
