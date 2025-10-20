@@ -78,20 +78,19 @@
 
     <!-- Right side: existing bookings -->
     <div class="booking-summary">
-      <h2>Existing Bookings</h2>
-      {% if lab_bookings %}
-        <ul>
-          {% for b in lab_bookings %}
-            <li>
-              {{ b.test }} – {{ b.slots }} slot{{ 's' if b.slots > 1 else '' }} booked
-              on {{ b.date|default('N/A') }} at {{ b.time|default('N/A') }}
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="empty">No bookings yet for this lab.</p>
+     <h2>Existing Bookings</h2>
+{% if lab_bookings %}
+  <ul>
+    {% for b in lab_bookings %}
+      {% if b.type == "test" %}
+        <li>
+          {{ b.test }} – {{ b.slots }} slot{{ "s" if b.slots > 1 else "" }} booked
+          on {{ b.date | datetimeformat("%d %b %Y") if b.date else "N/A" }}
+          at {{ b.time_slot if b.time_slot else "N/A" }}
+        </li>
       {% endif %}
-    </div>
-  </div>
-</body>
-</html>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="empty">No bookings yet for this lab.</p>
+{% endif %}
