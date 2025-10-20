@@ -93,13 +93,13 @@ for l in labs:
         test_slots[l][t] = {}  # Will hold date-wise bookings dynamically
 
 
-
 # ---------------------------
 # Helpers
 # ---------------------------
 def daterange(start_date, end_date):
     for n in range(int((end_date - start_date).days) + 1):
         yield start_date + timedelta(n)
+
 
 def parse_date(d):
     return datetime.strptime(d, "%Y-%m-%d").date()
@@ -111,6 +111,7 @@ def parse_date(d):
 @app.route("/")
 def home():
     return render_template("index.html")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -147,7 +148,9 @@ def choice():
 def hospitals_page():
     return render_template("hospital.html", hospitals=hospitals)
 
+
 app.add_url_rule('/hospitals', endpoint='show_hospitals', view_func=hospitals_page)
+
 
 @app.route("/hospital/<name>")
 def hospital_detail(name):
@@ -169,6 +172,7 @@ def hospital_detail(name):
         wards=wards_dict,
         hospital_bookings=hospital_bookings
     )
+
 
 @app.route("/hospital/<hospital>/ward/<ward>", methods=["GET", "POST"])
 def ward_booking_view(hospital, ward):
@@ -201,7 +205,9 @@ def ward_booking_view(hospital, ward):
     available_beds = max(0, DEFAULT_BEDS_PER_WARD - max_booked)
     return render_template("ward_booking.html", hospital=hospital, ward=ward, available_beds=available_beds)
 
-app.add_url_rule('/hospital/<hospital>/ward/<ward>', endpoint='ward_booking', view_func=ward_booking_view, methods=['GET','POST'])
+
+app.add_url_rule('/hospital/<hospital>/ward/<ward>', endpoint='ward_booking', view_func=ward_booking_view,
+                 methods=['GET', 'POST'])
 
 
 # ---------------------------
@@ -211,7 +217,9 @@ app.add_url_rule('/hospital/<hospital>/ward/<ward>', endpoint='ward_booking', vi
 def labs_page():
     return render_template("labs.html", labs=labs)
 
+
 app.add_url_rule('/labs', endpoint='show_labs', view_func=labs_page)
+
 
 @app.route("/lab/<name>")
 def lab_detail(name):
@@ -232,6 +240,7 @@ def lab_detail(name):
         tests=tests_dict,
         lab_bookings=lab_bookings
     )
+
 
 @app.route("/book_test/<lab>/<test>", methods=["GET", "POST"])
 def test_booking_view(lab, test):
@@ -289,6 +298,7 @@ def test_booking_view(lab, test):
         max_slots=DEFAULT_SLOTS_PER_TIME_SLOT
     )
 
+
 # ---------------------------
 # Confirm and Payment
 # ---------------------------
@@ -309,7 +319,9 @@ def confirm_booking():
                                lab=pending["lab"],
                                test=pending["test"],
                                slots=pending["slots"],
-                               time_slot=pending["time_slot"])
+                               time_slot=pending["time_slot"],
+                               date=pending.get("date"))
+
 
 @app.route("/payment", methods=["POST"])
 def payment():
@@ -349,66 +361,68 @@ def payment():
         })
         session.pop("pending_booking", None)
         return render_template("payment.html", success="Your bed(s) have been booked. Thank you for using MediSlotBook.")
-    
-elif pending["type"] == "test":
-    lab = pending["lab"]
-    test_name = pending["test"]
-    slots_requested = int(pending["slots"])
-    time_slot = pending["time_slot"]
-    date = pending["date"]
 
-    # Initialize data structures if not present
-    if lab not in test_slots:
-        test_slots[lab] = {}
-    if test_name not in test_slots[lab]:
-        test_slots[lab][test_name] = {}
-    if date not in test_slots[lab][test_name]:
-        test_slots[lab][test_name][date] = {"total": 0}
-        for ts in time_slots:
-            test_slots[lab][test_name][date][ts] = 0
+    # ---------------------------
+    # TEST BOOKING
+    # ---------------------------
+    elif pending["type"] == "test":
+        lab = pending["lab"]
+        test_name = pending["test"]
+        slots_requested = int(pending["slots"])
+        time_slot = pending["time_slot"]
+        date = pending["date"]
 
-    total_booked = test_slots[lab][test_name][date]["total"]
-    slot_booked = test_slots[lab][test_name][date][time_slot]
+        # Initialize data structures if not present
+        if lab not in test_slots:
+            test_slots[lab] = {}
+        if test_name not in test_slots[lab]:
+            test_slots[lab][test_name] = {}
+        if date not in test_slots[lab][test_name]:
+            test_slots[lab][test_name][date] = {"total": 0}
+            for ts in time_slots:
+                test_slots[lab][test_name][date][ts] = 0
 
-    if total_booked + slots_requested > DEFAULT_TOTAL_SLOTS_PER_TEST:
-        msg = "No slots left for this test."
-        return render_template("confirm_test_booking.html",
-                               lab=lab, test=test_name,
-                               slots=slots_requested,
-                               time_slot=time_slot,
-                               date=date,
-                               error=msg)
+        total_booked = test_slots[lab][test_name][date]["total"]
+        slot_booked = test_slots[lab][test_name][date][time_slot]
 
-    if slot_booked + slots_requested > DEFAULT_SLOTS_PER_TIME_SLOT:
-        msg = "All slots for this time are already full. Please choose another time."
-        return render_template("confirm_test_booking.html",
-                               lab=lab, test=test_name,
-                               slots=slots_requested,
-                               time_slot=time_slot,
-                               date=date,
-                               error=msg)
+        if total_booked + slots_requested > DEFAULT_TOTAL_SLOTS_PER_TEST:
+            msg = "No slots left for this test."
+            return render_template("confirm_test_booking.html",
+                                   lab=lab, test=test_name,
+                                   slots=slots_requested,
+                                   time_slot=time_slot,
+                                   date=date,
+                                   error=msg)
 
-    test_slots[lab][test_name][date]["total"] += slots_requested
-    test_slots[lab][test_name][date][time_slot] += slots_requested
-    bookings.append({
-        "type": "test", "user": user,
-        "lab": lab, "test": test_name,
-        "slots": slots_requested,
-        "time_slot": time_slot,
-        "date": date
-    })
+        if slot_booked + slots_requested > DEFAULT_SLOTS_PER_TIME_SLOT:
+            msg = "All slots for this time are already full. Please choose another time."
+            return render_template("confirm_test_booking.html",
+                                   lab=lab, test=test_name,
+                                   slots=slots_requested,
+                                   time_slot=time_slot,
+                                   date=date,
+                                   error=msg)
 
-    session.pop("pending_booking", None)
-    return render_template("payment.html", success="Your slot(s) have been booked. Thank you for using MediSlotBook.")
+        test_slots[lab][test_name][date]["total"] += slots_requested
+        test_slots[lab][test_name][date][time_slot] += slots_requested
+        bookings.append({
+            "type": "test", "user": user,
+            "lab": lab, "test": test_name,
+            "slots": slots_requested,
+            "time_slot": time_slot,
+            "date": date
+        })
 
-else:
+        session.pop("pending_booking", None)
+        return render_template("payment.html", success="Your slot(s) have been booked. Thank you for using MediSlotBook.")
+
+    else:
         return render_template("payment.html", error="Unknown booking type.")
 
 
 # ---------------------------
 # Institution Login & Dashboard
 # ---------------------------
-
 institution_credentials = {
     # Hospitals
     "IPGMER & SSKM Hospital": "ipgmer123",
@@ -436,6 +450,7 @@ institution_credentials = {
     "Healthians": "health123"
 }
 
+
 @app.route("/institution_login", methods=["GET", "POST"])
 def institution_login():
     if request.method == "POST":
@@ -447,6 +462,7 @@ def institution_login():
         else:
             flash("Invalid credentials. Please try again.")
     return render_template("institution_login.html", hospitals=hospitals, labs=labs)
+
 
 @app.route("/institution_dashboard")
 def institution_dashboard():
