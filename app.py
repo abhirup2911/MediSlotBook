@@ -90,9 +90,8 @@ for h in hospitals:
 for l in labs:
     test_slots[l] = {}
     for t in tests:
-        test_slots[l][t] = {"total": 0}
-        for ts in time_slots:
-            test_slots[l][t][ts] = 0
+        test_slots[l][t] = {}  # Will hold date-wise bookings dynamically
+
 
 
 # ---------------------------
@@ -236,7 +235,6 @@ def lab_detail(name):
 
 @app.route("/book_test/<lab>/<test>", methods=["GET", "POST"])
 def test_booking_view(lab, test):
-    # Predefined time slots
     time_slots = [
         "6:00AM - 7:00AM",
         "7:00AM - 8:00AM",
@@ -247,12 +245,20 @@ def test_booking_view(lab, test):
         "7:00PM - 8:00PM"
     ]
 
-    # Compute available time slots based on current bookings
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    selected_date = request.args.get("date", today)
     available_times = []
+
+    # check date-specific booking counts
+    date_slots = test_slots.get(lab, {}).get(test, {}).get(selected_date, {})
+
     for ts in time_slots:
-        booked_count = test_slots.get(lab, {}).get(test, {}).get(ts, 0)
-        if booked_count < DEFAULT_SLOTS_PER_TIME_SLOT:
-            available_times.append(ts)
+        count = date_slots.get(ts, 0)
+        available_times.append({
+            "time": ts,
+            "available": count < DEFAULT_SLOTS_PER_TIME_SLOT
+        })
 
     if request.method == "POST":
         slots = request.form.get("slots")
@@ -263,7 +269,6 @@ def test_booking_view(lab, test):
             flash("Please fill in all fields before booking.")
             return redirect(url_for("test_booking_view", lab=lab, test=test))
 
-        # Save as pending booking in session
         session["pending_booking"] = {
             "type": "test",
             "lab": lab,
@@ -273,16 +278,16 @@ def test_booking_view(lab, test):
             "time_slot": time_slot
         }
 
-        # Redirect to confirm page
         return redirect(url_for("confirm_booking"))
 
     return render_template(
         "test_booking.html",
         lab=lab,
         test=test,
-        available_times=available_times
+        available_times=available_times,
+        today=today,
+        max_slots=DEFAULT_SLOTS_PER_TIME_SLOT
     )
-
 
 # ---------------------------
 # Confirm and Payment
@@ -346,40 +351,42 @@ def payment():
         return render_template("payment.html", success="Your bed(s) have been booked. Thank you for using MediSlotBook.")
 
     elif pending["type"] == "test":
-        lab = pending["lab"]
-        test_name = pending["test"]
-        slots_requested = int(pending["slots"])
-        time_slot = pending["time_slot"]
+    lab = pending["lab"]
+    test_name = pending["test"]
+    slots_requested = int(pending["slots"])
+    date = pending["date"]
+    time_slot = pending["time_slot"]
 
-        total_booked = test_slots[lab][test_name]["total"]
-        slot_booked = test_slots[lab][test_name][time_slot]
+    # initialize date dict if not present
+    if date not in test_slots[lab][test_name]:
+        test_slots[lab][test_name][date] = {}
 
-        if total_booked + slots_requested > DEFAULT_TOTAL_SLOTS_PER_TEST:
-            msg = "No slots left for this test."
-            return render_template("confirm_test_booking.html",
-                                   lab=lab, test=test_name,
-                                   slots=slots_requested,
-                                   time_slot=time_slot,
-                                   error=msg)
+    date_slots = test_slots[lab][test_name][date]
+    current_count = date_slots.get(time_slot, 0)
 
-        if slot_booked + slots_requested > DEFAULT_SLOTS_PER_TIME_SLOT:
-            msg = "All slots for this time is already full. Please choose another time."
-            return render_template("confirm_test_booking.html",
-                                   lab=lab, test=test_name,
-                                   slots=slots_requested,
-                                   time_slot=time_slot,
-                                   error=msg)
+    if current_count + slots_requested > DEFAULT_SLOTS_PER_TIME_SLOT:
+        msg = "All slots for this time are already full. Please choose another time."
+        return render_template("confirm_test_booking.html",
+                               lab=lab, test=test_name,
+                               slots=slots_requested,
+                               date=date,
+                               time_slot=time_slot,
+                               error=msg)
 
-        test_slots[lab][test_name]["total"] += slots_requested
-        test_slots[lab][test_name][time_slot] += slots_requested
-        bookings.append({
-            "type": "test", "user": user,
-            "lab": lab, "test": test_name,
-            "slots": slots_requested,
-            "time_slot": time_slot
-        })
-        session.pop("pending_booking", None)
-        return render_template("payment.html", success="Your slot(s) have been booked. Thank you for using MediSlotBook.")
+    # Book it
+    date_slots[time_slot] = current_count + slots_requested
+    bookings.append({
+        "type": "test",
+        "user": user,
+        "lab": lab,
+        "test": test_name,
+        "slots": slots_requested,
+        "date": date,
+        "time_slot": time_slot
+    })
+    session.pop("pending_booking", None)
+    return render_template("payment.html", success="Your slot(s) have been booked. Thank you for using MediSlotBook.")
+
 
     else:
         return render_template("payment.html", error="Unknown booking type.")
