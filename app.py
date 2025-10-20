@@ -154,12 +154,10 @@ app.add_url_rule('/hospitals', endpoint='show_hospitals', view_func=hospitals_pa
 
 @app.route("/hospital/<name>")
 def hospital_detail(name):
-    wards_dict = {}
-    for w in wards:
-        booked_values = beds_calendar.get(name, {}).get(w, {})
-        max_booked = max(booked_values.values()) if booked_values else 0
-        available = max(0, DEFAULT_BEDS_PER_WARD - max_booked)
-        wards_dict[w] = available
+  wards_dict = {}
+for w in wards:
+    wards_dict[w] = DEFAULT_BEDS_PER_WARD
+
 
     hospital_bookings = [
         b for b in bookings
