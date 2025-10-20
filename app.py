@@ -184,13 +184,39 @@ def ward_booking_view(hospital, ward):
             start_date = parse_date(start_date_str)
             end_date = parse_date(end_date_str)
             if end_date < start_date:
-                return render_template("ward_booking.html", hospital=hospital, ward=ward,
-                                       error="End date must be same or after start date.",
-                                       available_beds=DEFAULT_BEDS_PER_WARD)
+                return render_template(
+                    "ward_booking.html",
+                    hospital=hospital,
+                    ward=ward,
+                    error="End date must be same or after start date.",
+                    available_beds=DEFAULT_BEDS_PER_WARD
+                )
         except Exception:
-            return render_template("ward_booking.html", hospital=hospital, ward=ward,
-                                   error="Invalid date format. Use YYYY-MM-DD.",
-                                   available_beds=DEFAULT_BEDS_PER_WARD)
+            return render_template(
+                "ward_booking.html",
+                hospital=hospital,
+                ward=ward,
+                error="Invalid date format. Use YYYY-MM-DD.",
+                available_beds=DEFAULT_BEDS_PER_WARD
+            )
+
+        # Calculate max beds available in the selected date range
+        max_booked_in_range = 0
+        for single_date in daterange(start_date, end_date):
+            date_str = single_date.isoformat()
+            booked = beds_calendar.get(hospital, {}).get(ward, {}).get(date_str, 0)
+            max_booked_in_range = max(max_booked_in_range, booked)
+        available_beds = DEFAULT_BEDS_PER_WARD - max_booked_in_range
+
+        if beds > available_beds:
+            return render_template(
+                "ward_booking.html",
+                hospital=hospital,
+                ward=ward,
+                error=f"Not enough beds available. Max {available_beds} bed(s) can be booked for the selected dates.",
+                available_beds=available_beds
+            )
+
         session["pending_booking"] = {
             "type": "bed",
             "hospital": hospital,
@@ -200,9 +226,15 @@ def ward_booking_view(hospital, ward):
             "end_date": end_date_str
         }
         return redirect(url_for("confirm_booking"))
-    booked_values = beds_calendar.get(hospital, {}).get(ward, {})
-    max_booked = max(booked_values.values()) if booked_values else 0
-    available_beds = max(0, DEFAULT_BEDS_PER_WARD - max_booked)
+
+    # Calculate available beds for display (today onwards)
+    today = datetime.now().date()
+    max_booked = 0
+    for single_date in daterange(today, today):
+        booked = beds_calendar.get(hospital, {}).get(ward, {}).get(single_date.isoformat(), 0)
+        max_booked = max(max_booked, booked)
+    available_beds = DEFAULT_BEDS_PER_WARD - max_booked
+
     return render_template("ward_booking.html", hospital=hospital, ward=ward, available_beds=available_beds)
 
 
