@@ -4,12 +4,18 @@
   <title>Hospitals</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-  <h2>Available Hospitals</h2>
-  <ul>
-    {% for hospital in hospitals %}
-      <li><a href="{{ url_for('hospital_detail', name=hospital) }}">{{ hospital }}</a></li>
-    {% endfor %}
-  </ul>
+<body class="hospitals-bg">
+  <div class="overlay-box">
+    <h2>Available Hospitals</h2>
+    <ul>
+      {% for hospital in hospitals %}
+        <li><a href="{{ url_for('hospital_detail', name=hospital) }}">{{ hospital }}</a></li>
+      {% endfor %}
+    </ul>
+
+    <div style="margin-top:18px;">
+      <a href="{{ url_for('choice') }}" class="btn btn-sm">← Back</a>
+    </div>
+  </div>
 </body>
 </html>
