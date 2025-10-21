@@ -62,7 +62,7 @@
       <ul>
         {% for ward, beds in wards.items() %}
           <li>
-            <a href="{{ url_for('ward_booking', hospital=name, ward=ward) }}">{{ ward }}</a>
+            <a href="{{ url_for('ward_booking_view', hospital=name, ward=ward) }}">{{ ward }}</a>
             - <span>{{ beds }} beds available</span>
           </li>
         {% endfor %}
