@@ -76,9 +76,9 @@
         <ul>
           {% for b in hospital_bookings %}
             <li>
-              {{ b.ward }} – {{ b.beds }} bed{{ 's' if b.beds > 1 else '' }} booked
-              from {{ b.from|datetimeformat('%d %b %Y') if b.from else b.from }}
-              to {{ b.to|datetimeformat('%d %b %Y') if b.to else b.to }}
+              {{ b["ward"] }} – {{ b["beds"] }} bed{{ 's' if b["beds"] > 1 else '' }} booked
+              from {{ b["from"]|datetimeformat('%d %b %Y') if b["from"] else b["from"] }}
+              to {{ b["to"]|datetimeformat('%d %b %Y') if b["to"] else b["to"] }}
             </li>
           {% endfor %}
         </ul>
