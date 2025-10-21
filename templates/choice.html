@@ -4,11 +4,15 @@
   <title>Choose Option - MediSlotBook</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-  <h1>Welcome, {{ user.name }}!</h1>
-  <div class="options">
-   <a href="{{ url_for('hospitals_page') }}" class="box">Hospitals</a>
-    <a href="{{ url_for('labs_page') }}" class="box">Pathology Labs</a>
+<body class="home-bg">
+  <div class="overlay-box welcome-screen">
+    <h1>Welcome, {{ user.name }}!</h1>
+    <p>Select an option below to continue</p>
+
+    <div class="options">
+      <a href="{{ url_for('hospitals_page') }}" class="box">Hospitals</a>
+      <a href="{{ url_for('labs_page') }}" class="box">Pathology Labs</a>
+    </div>
   </div>
 </body>
 </html>
