@@ -21,8 +21,7 @@ body {
 
 /* Background classes (use these on <body>) */
 body.home-bg {
-  background-image: url("/static/images/home_bg.jpg");
-}
+  background-color: lightblue;
 body.login-bg {
   background-image: url("/static/images/login_bg.jpg");
 }
