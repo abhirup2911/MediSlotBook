@@ -4,23 +4,33 @@
   <title>Login - MediSlotBook</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-  <h1>Login / Sign Up</h1>
-  <form method="POST">
-    <label>Full Name:</label>
-    <input type="text" name="fullname" required>
-    <label>Age:</label>
-    <input type="number" name="age" required>
-    <label>Address:</label>
-    <input type="text" name="address" required>
-    <label>Email:</label>
-    <input type="email" name="email" required>
-    <label>Phone:</label>
-    <input type="text" name="phone" required>
-    <button type="submit">Create Account</button>
-  </form>
-  <form method="POST">
-    <button type="submit" name="guest">Login as Guest</button>
-  </form>
+<body class="login-bg">
+  <div class="overlay-box">
+    <h1>Login / Sign Up</h1>
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <label>Full Name:</label>
+      <input type="text" name="fullname" required>
+
+      <label>Age:</label>
+      <input type="number" name="age" required>
+
+      <label>Address:</label>
+      <input type="text" name="address" required>
+
+      <label>Email:</label>
+      <input type="email" name="email" required>
+
+      <label>Phone:</label>
+      <input type="text" name="phone" required>
+
+      <button type="submit">Create Account</button>
+    </form>
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <input type="hidden" name="guest" value="1">
+      <button type="submit" class="btn btn-sm institution">Login as Guest</button>
+    </form>
+  </div>
 </body>
 </html>
