@@ -199,25 +199,20 @@ def ward_booking_view(hospital, ward):
                     available_beds=DEFAULT_BEDS_PER_WARD
                 )
 
-        # Book beds
-        for single_date in daterange(start_date, end_date):
-            date_str = single_date.isoformat()
-            beds_calendar[hospital][ward][date_str] = beds_calendar[hospital][ward].get(date_str, 0) + beds_requested
-
-        # Save booking
-        bookings.append({
+        # ✅ Store the booking temporarily for confirmation
+        session["pending_booking"] = {
             "type": "bed",
-            "user": session.get("user"),
             "hospital": hospital,
             "ward": ward,
             "beds": beds_requested,
-            "from": start_date_str,
-            "to": end_date_str
-        })
+            "start_date": start_date_str,
+            "end_date": end_date_str
+        }
 
-        session.pop("pending_booking", None)
+        # Redirect to confirmation page
         return redirect(url_for("confirm_booking"))
 
+    # GET request → show form
     return render_template(
         "ward_booking.html",
         hospital=hospital,
