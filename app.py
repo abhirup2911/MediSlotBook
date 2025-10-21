@@ -146,17 +146,21 @@ def hospitals_page():
 
 @app.route("/hospital/<name>")
 def hospital_detail(name):
-    wards_dict = {w: DEFAULT_BEDS_PER_WARD for w in wards}  # always show 10 beds
+    wards_dict = {w: DEFAULT_BEDS_PER_WARD for w in wards}
+
+    # Case-insensitive match for hospital name
     hospital_bookings = [
         b for b in bookings
-        if b["type"] == "bed" and b["hospital"] == name
+        if b.get("type") == "bed" and b.get("hospital", "").lower().strip() == name.lower().strip()
     ]
+
     return render_template(
         "hospital_detail.html",
         name=name,
         wards=wards_dict,
         hospital_bookings=hospital_bookings
     )
+
 
 @app.route("/hospital/<hospital>/ward/<ward>", methods=["GET", "POST"])
 def ward_booking_view(hospital, ward):
@@ -330,11 +334,61 @@ def payment():
     if not user or user.get("name") == "Guest":
         return render_template("payment.html", error="Please Login first and then try again.")
 
+    # ✅ Handle bed bookings
     if pending["type"] == "bed":
+        hospital = pending["hospital"]
+        ward = pending["ward"]
+        beds_requested = int(pending["beds"])
+        start_date = parse_date(pending["start_date"])
+        end_date = parse_date(pending["end_date"])
+
+        # Update calendar
+        for single_date in daterange(start_date, end_date):
+            date_str = single_date.isoformat()
+            beds_calendar[hospital][ward][date_str] = beds_calendar[hospital][ward].get(date_str, 0) + beds_requested
+
+        # ✅ Store booking permanently
+        bookings.append({
+            "type": "bed",
+            "user": user,
+            "hospital": hospital,
+            "ward": ward,
+            "beds": beds_requested,
+            "from": pending["start_date"],
+            "to": pending["end_date"]
+        })
+
+        session.pop("pending_booking", None)
         return render_template("payment.html", success="Your bed(s) have been booked. Thank you for using MediSlotBook.")
-    else:
-        # handle test bookings here (as in your original code)
+
+    # ✅ Handle test bookings
+    elif pending["type"] == "test":
+        lab = pending["lab"]
+        test = pending["test"]
+        slots = int(pending["slots"])
+        date = pending["date"]
+        time_slot = pending["time_slot"]
+
+        test_slots.setdefault(lab, {}).setdefault(test, {}).setdefault(date, {})
+        test_slots[lab][test][date][time_slot] = test_slots[lab][test][date].get(time_slot, 0) + slots
+
+        # ✅ Store booking permanently
+        bookings.append({
+            "type": "test",
+            "user": user,
+            "lab": lab,
+            "test": test,
+            "slots": slots,
+            "date": date,
+            "time": time_slot
+        })
+
+        session.pop("pending_booking", None)
         return render_template("payment.html", success="Your slot(s) have been booked. Thank you for using MediSlotBook.")
+
+    else:
+        return render_template("payment.html", error="Invalid booking type.")
+
 
 
 # ---------------------------
