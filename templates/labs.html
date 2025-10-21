@@ -1,15 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Labs</title>
+  <meta charset="UTF-8">
+  <title>Pathology Labs - MediSlotBook</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    function filterLabs() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const items = document.querySelectorAll(".lab-item");
+      items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(input) ? "" : "none";
+      });
+    }
+    function sortLabs() {
+      const ul = document.getElementById("labList");
+      Array.from(ul.children)
+        .sort((a, b) => a.textContent.localeCompare(b.textContent))
+        .forEach(li => ul.appendChild(li));
+    }
+  </script>
 </head>
-<body>
-  <h2>Available Pathology Labs</h2>
-  <ul>
-    {% for lab in labs %}
-      <li><a href="{{ url_for('lab_detail', name=lab) }}">{{ lab }}</a></li>
-    {% endfor %}
-  </ul>
+<body class="labs-bg">
+  <div class="overlay-box">
+    <h1>Pathology Labs</h1>
+
+    <div class="search-filter" style="justify-content:center; margin:12px 0;">
+      <input type="text" id="searchInput" placeholder="Search lab..." onkeyup="filterLabs()" style="width:60%; padding:10px; border-radius:8px;">
+      <button onclick="sortLabs()" class="btn btn-sm">A–Z</button>
+    </div>
+
+    <ul id="labList">
+      {% for lab in labs %}
+        <li class="lab-item"><a href="{{ url_for('lab_detail', name=lab) }}">{{ lab }}</a></li>
+      {% endfor %}
+    </ul>
+
+    <div style="margin-top:18px;">
+      <a href="{{ url_for('choice') }}" class="btn btn-sm">← Back</a>
+    </div>
+  </div>
 </body>
 </html>
